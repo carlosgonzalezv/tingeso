@@ -1,0 +1,87 @@
+import { useEffect } from 'react';
+import { useKeycloak } from '@react-keycloak/web';
+import { syncUserWithBackend } from './services/UserService';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider, createTheme, CssBaseline, Box, Typography, Button } from '@mui/material';
+import MainPage from './components/MainPage.jsx';
+import PrivateRoute from './components/PrivateRoute';
+import UserList from './components/UserList.jsx';
+import Profile from './components/Profile';
+import Navbar from './components/Navbar';
+import PublishPackage from './components/PublishPackage';
+
+const theme = createTheme({
+    palette: {
+        primary: {
+            main: '#ff8c00',
+        },
+        secondary: {
+            main: '#37474f',
+        },
+    },
+});
+
+
+function App() {
+    const { keycloak, initialized } = useKeycloak();
+    useEffect(() => {
+        if (initialized && keycloak.authenticated) {
+            const performSync = async () => {
+                try {
+                    await syncUserWithBackend(keycloak);
+                    console.log("Sincronización con PostgreSQL completada con éxito.");
+                } catch (error) {
+                    console.error("Error al intentar sincronizar el usuario:", error);
+                }
+            };
+            performSync();
+        }
+    }, [initialized, keycloak.authenticated, keycloak]);
+
+    return (
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <Router>
+                <Navbar />
+                <Box sx={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+                    <Routes>
+                        <Route path="/" element={<MainPage />} />
+                        <Route path="/perfil" element={<Profile />} />
+                        <Route
+                            path="/publish-package"
+                            element={
+                                <PrivateRoute role="ADMIN">
+                                    <PublishPackage/>
+                                </PrivateRoute>
+                            }
+                        />
+                        <Route
+                            path="/usuarios"
+                            element={
+                                <PrivateRoute role="ADMIN">
+                                    {/* p: 5 da mucho margen, puedes bajarlo a 2 si quieres más ancho */}
+                                    <Box sx={{ p: 2, textAlign: 'center', width: '100%' }}>
+                                        <Typography variant="h4" gutterBottom>
+                                            Lista de Usuarios Registrados
+                                        </Typography>
+                                        <UserList />
+                                        <Button
+                                            variant="contained"
+                                            color="secondary"
+                                            onClick={() => window.history.back()}
+                                            sx={{ mt: 3 }}
+                                        >
+                                            Volver
+                                        </Button>
+                                    </Box>
+                                </PrivateRoute>
+                            }
+                        />
+                    </Routes>
+                </Box>
+            </Router>
+        </ThemeProvider>
+    );
+}
+
+export default App;
