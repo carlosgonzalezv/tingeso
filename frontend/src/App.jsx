@@ -9,6 +9,7 @@ import UserList from './components/UserList.jsx';
 import Profile from './components/Profile';
 import Navbar from './components/Navbar';
 import PublishPackage from './components/PublishPackage';
+import BookingPage from './components/BookingPage'; // <--- Importamos la nueva página
 
 const theme = createTheme({
     palette: {
@@ -47,6 +48,17 @@ function App() {
                     <Routes>
                         <Route path="/" element={<MainPage />} />
                         <Route path="/perfil" element={<Profile />} />
+
+                        {/* NUEVA RUTA DE RESERVA: Protegida para usuarios logueados */}
+                        <Route
+                            path="/booking/:id"
+                            element={
+                                <PrivateRoute>
+                                    <BookingPage />
+                                </PrivateRoute>
+                            }
+                        />
+
                         <Route
                             path="/publish-package"
                             element={
@@ -59,7 +71,6 @@ function App() {
                             path="/usuarios"
                             element={
                                 <PrivateRoute role="ADMIN">
-                                    {/* p: 5 da mucho margen, puedes bajarlo a 2 si quieres más ancho */}
                                     <Box sx={{ p: 2, textAlign: 'center', width: '100%' }}>
                                         <Typography variant="h4" gutterBottom>
                                             Lista de Usuarios Registrados

@@ -3,6 +3,7 @@ import { Card, CardMedia, CardContent, Typography, Box, Collapse, Button, Chip }
 import { useKeycloak } from '@react-keycloak/web';
 import BookingService from '../services/BookingService';
 import BookingModal from './BookingModal';
+import {useNavigate} from "react-router-dom";
 
 function PackCard({ pack, onManage, isAdmin }) {
     const [expanded, setExpanded] = useState(false);
@@ -40,12 +41,15 @@ function PackCard({ pack, onManage, isAdmin }) {
     };
 
     // Función que maneja el clic en el botón principal
+    const navigate = useNavigate();
+
     const handleButtonClick = () => {
         if (!keycloak.authenticated) {
             keycloak.login();
             return;
         }
-        setModalOpen(true); // Abrimos el modal en lugar de reservar directo
+        // Redirigimos a la nueva página pasando el ID del paquete
+        navigate(`/booking/${pack.id}`);
     };
 
     const availableSlots = pack.availableSlots || 0;

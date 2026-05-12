@@ -29,6 +29,7 @@ export default function BookingModal({ open, onClose, onConfirm, packName, maxSl
                         onChange={(e) => setCount(parseInt(e.target.value))}
                         helperText={`Máximo disponible: ${maxSlots}`}
                     />
+
                     <TextField
                         label="Solicitudes Especiales (Opcional)"
                         multiline rows={3}
