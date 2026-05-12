@@ -34,14 +34,17 @@ const MainPage = () => {
     const isAdmin = roles.includes("ADMIN");
 
     // Función para cargar datos (usando el Service)
+    // Busca esta parte en tu archivo MainPage.jsx
     const loadData = useCallback(async () => {
-        try {
-            const data = await PackService.getPackages();
-            setPackages(data);
-        } catch (error) {
-            console.error("Error al cargar paquetes:", error);
+        if (keycloak.token) { // Solo si hay token
+            try {
+                const data = await PackService.getPackages(keycloak.token);
+                setPackages(data);
+            } catch (error) {
+                console.error("Error al cargar paquetes:", error);
+            }
         }
-    }, []);
+    }, [keycloak.token]);
 
     useEffect(() => {
         if (initialized) {

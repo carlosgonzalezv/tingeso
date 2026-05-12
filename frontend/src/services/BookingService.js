@@ -19,3 +19,5 @@ export const BookingService = {
         }
     }
 };
+
+export default BookingService;

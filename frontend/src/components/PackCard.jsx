@@ -1,36 +1,37 @@
 import { useState } from 'react';
 import { Card, CardMedia, CardContent, Typography, Box, Collapse, Button, Chip } from '@mui/material';
-import { useKeycloak } from '@react-keycloak/web'; // O de donde importes tu hook de Keycloak
-import BookingService from '../services/BookingService'; // Tu carpeta de services
+import { useKeycloak } from '@react-keycloak/web';
+import BookingService from '../services/BookingService';
 
 function PackCard({ pack, onManage, isAdmin }) {
     const [expanded, setExpanded] = useState(false);
     const { keycloak } = useKeycloak();
 
+    // 1. Limpieza de fechas (quita el 00:00:00 y maneja nulos)
     const formatDate = (dateStr) => {
         if (!dateStr) return '';
-        const [year, month, day] = dateStr.split('-');
+        const dateOnly = dateStr.split('T')[0];
+        const [year, month, day] = dateOnly.split('-');
         return `${day}/${month}/${year}`;
     };
 
-    // Función de reserva que usa tu Service
     const handleBooking = async () => {
         if (!keycloak.authenticated) {
             keycloak.login();
             return;
         }
-
         try {
-            // Pasamos el token o el objeto keycloak completo según pida tu service
-            await BookingService.createBooking(keycloak, pack.id);
+            await BookingService.createBooking(keycloak.token, pack.id);
             alert("¡Intención de reserva registrada con éxito!");
         } catch (error) {
             console.error("Error en la reserva:", error);
-            alert("Error al procesar la reserva. Intenta nuevamente.");
+            alert("Error al procesar la reserva.");
         }
     };
 
-    const isDisabled = pack.status === 'DESHABILITADO' || pack.availableSlots <= 0;
+    // 2. Definición de variables para que no salgan errores de "Unused"
+    const availableSlots = pack.availableSlots || 0;
+    const isDisabled = pack.status === 'DESHABILITADO' || availableSlots <= 0;
 
     return (
         <Card
@@ -40,53 +41,56 @@ function PackCard({ pack, onManage, isAdmin }) {
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                borderRadius: '16px',
+                borderRadius: '12px',
                 transition: 'all 0.3s ease',
-                boxShadow: expanded ? '0px 8px 25px rgba(0,0,0,0.2)' : '0px 2px 10px rgba(0,0,0,0.1)',
-                opacity: isDisabled ? 0.7 : 1
+                boxShadow: expanded ? '0px 4px 15px rgba(0,0,0,0.2)' : '0px 1px 5px rgba(0,0,0,0.1)',
+                opacity: isDisabled ? 0.8 : 1
             }}
         >
             <CardMedia
                 component="img"
-                height="200"
+                height="160"
                 image={pack.imageUrl || "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800&auto=format&fit=crop"}
                 alt={pack.name}
             />
-            <CardContent sx={{ flexGrow: 1 }}>
-                <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#FB8C00' }}>
+            <CardContent sx={{ flexGrow: 1, p: 2, textAlign: 'center' }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#FB8C00', mb: 0.5 }}>
                     {pack.name}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+
+                {/* Mostramos ambas fechas: startDate y endDate */}
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                     {formatDate(pack.startDate)} al {formatDate(pack.finishDate)}
                 </Typography>
 
-                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#2e7d32' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#2e7d32' }}>
                         ${Number(pack.price).toLocaleString('es-CL')}
                     </Typography>
                     <Chip
-                        label={pack.availableSlots > 0 ? `${pack.availableSlots} cupos` : "Agotado"}
-                        color={pack.availableSlots < 5 ? "warning" : "default"}
+                        label={availableSlots > 0 ? `${availableSlots} cupos` : "Agotado"}
+                        color={availableSlots < 5 ? "warning" : "default"}
                         size="small"
+                        sx={{ fontSize: '0.7rem', height: '20px' }}
                     />
                 </Box>
 
                 <Collapse in={expanded} timeout="auto">
-                    <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #eee' }}>
-                        <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                            {pack.description}
+                    <Box sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid #eee' }}>
+                        <Typography variant="caption" sx={{ display: 'block', mb: 1.5, color: 'text.secondary' }}>
+                            {pack.description || "viaje de pruebas"}
                         </Typography>
 
-                        <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                             <Button
                                 variant="contained"
                                 fullWidth
                                 size="small"
-                                onClick={handleBooking} // <--- AQUÍ VINCULAMOS LA FUNCIÓN
-                                disabled={isDisabled}
-                                sx={{ backgroundColor: '#FB8C00', '&:hover': { backgroundColor: '#e67e00' } }}
+                                onClick={handleBooking} // Aquí se usa la función que daba error
+                                disabled={isDisabled}   // Aquí se usa la constante que daba error
+                                sx={{ backgroundColor: '#FB8C00', fontWeight: 'bold' }}
                             >
-                                {keycloak.authenticated ? 'Reservar Ahora' : 'Loguear para Reservar'}
+                                {keycloak.authenticated ? 'RESERVAR' : 'LOGIN'}
                             </Button>
 
                             {isAdmin && (
@@ -95,9 +99,9 @@ function PackCard({ pack, onManage, isAdmin }) {
                                     fullWidth
                                     size="small"
                                     onClick={() => onManage(pack)}
-                                    sx={{ color: '#37474f', borderColor: '#37474f' }}
+                                    sx={{ color: '#37474f', borderColor: '#37474f', fontWeight: 'bold' }}
                                 >
-                                    Gestionar
+                                    GESTIONAR
                                 </Button>
                             )}
                         </Box>

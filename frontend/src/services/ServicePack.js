@@ -1,56 +1,76 @@
 import axios from 'axios';
-const API_URL = "/api/v1/user";
 
-export const syncUserWithBackend = async (keycloak) => {
-    const userData = {
-        keycloackID: keycloak.tokenParsed.sub,
-        username: keycloak.tokenParsed.preferred_username,
-        email: keycloak.tokenParsed.email,
-        name: keycloak.tokenParsed.name,
-        idDocument: keycloak.tokenParsed.idDocument,
-        cellphone: keycloak.tokenParsed.cellphone,
-        nationality: keycloak.tokenParsed.nationality,
-        rol: "USER",
-        statement: "Activo"
-    };
+// Usábamos rutas relativas para que el Proxy (Vite o Nginx) redirigiera al 8080
+const API_URL = "/api/v1/user";
+const PACKS_URL = "/api/v1/tourPack/";
+
+// --- FUNCIONES DE PAQUETES ---
+
+const getPackages = async (token) => {
     try {
-        const response = await axios.post(`${API_URL}/sync`, userData, {
-            headers: { 'Authorization': `Bearer ${keycloak.token}` }
+        // Esta era la clave: el token se pasaba en el header
+        const response = await axios.get(PACKS_URL, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
         });
         return response.data;
     } catch (error) {
-        console.error("Error syncing user:", error);
+        console.error("Error al obtener paquetes:", error);
         throw error;
     }
 };
 
-export const updateUserInfo = async (keycloak, formData) => {
-    const keycloakId = keycloak.tokenParsed.sub;
-    const updateData = {
-        name: formData.name,
-        idDocument: formData.idDocument,
-        cellphone: formData.cellphone,
-        nationality: formData.nationality
-    };
+const savePackage = async (packData, token) => {
     try {
-        const response = await axios.put(`${API_URL}/update/${keycloakId}`, updateData, {
-            headers: { 'Authorization': `Bearer ${keycloak.token}` }
+        const response = await axios.post(`${PACKS_URL}/save`, packData, {
+            headers: { Authorization: `Bearer ${token}` }
         });
-        return response.data; // Retornamos el dato limpio
+        return response.data;
     } catch (error) {
-        throw error.response?.data || "Error al actualizar la información";
+        throw error.response?.data || "Error al guardar el paquete";
     }
 };
 
-export const getUserInfo = async (keycloak, email) => {
-    if (!email) return null;
+const filterPackages = (packages, filters, isAdmin) => {
+    // Si no hay paquetes (porque la API falló), devolvemos array vacío
+    if (!packages) return [];
+
+    return packages.filter(pack => {
+        const matchesSearch = (pack.name || "").toLowerCase().includes(filters.searchTerm.toLowerCase());
+        const matchesMinPrice = !filters.minPrice || pack.price >= parseFloat(filters.minPrice);
+        const matchesMaxPrice = !filters.maxPrice || pack.price <= parseFloat(filters.maxPrice);
+
+        // Si no es admin, solo ve los DISPONIBLES
+        const matchesStatus = isAdmin || pack.status === 'DISPONIBLE';
+
+        return matchesSearch && matchesMinPrice && matchesMaxPrice && matchesStatus;
+    });
+};
+
+// --- FUNCIONES DE USUARIO ---
+
+const syncUserWithBackend = async (keycloak) => {
     try {
-        const response = await axios.get(`${API_URL}/${email}`, {
-            headers: { 'Authorization': `Bearer ${keycloak.token}` }
+        const userData = {
+            email: keycloak.tokenParsed.email,
+            firstName: keycloak.tokenParsed.given_name,
+            lastName: keycloak.tokenParsed.family_name,
+            username: keycloak.tokenParsed.preferred_username
+        };
+
+        const response = await axios.post(`${API_URL}/sync`, userData, {
+            headers: { Authorization: `Bearer ${keycloak.token}` }
         });
-        return response.data; // Retornamos el dato limpio
+        return response.data;
     } catch (error) {
-        console.error("Error fetching user info:", error);
-        throw error;
+        console.error("Error al sincronizar usuario:", error);
     }
+};
+
+export const PackService = {
+    getPackages,
+    savePackage,
+    filterPackages,
+    syncUserWithBackend
 };
