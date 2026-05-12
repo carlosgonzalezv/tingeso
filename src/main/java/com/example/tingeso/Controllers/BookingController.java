@@ -1,41 +1,47 @@
 package com.example.tingeso.Controllers;
 
 import com.example.tingeso.Entities.BookingEntity;
+import com.example.tingeso.Entities.BookingRequestDTO; // Ajusta el import si lo dejaste ahí
 import com.example.tingeso.Services.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/booking")
 @CrossOrigin("*")
 public class BookingController {
-    @Autowired
-    BookingService bookingService;
 
-    //It retrieves all reservation records that exist in the system.
+    @Autowired
+    private BookingService bookingService;
+
+    // Standard list for admin or general view
     @GetMapping("/")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    public ResponseEntity<ArrayList<BookingEntity>> listBookings() {
-        return ResponseEntity.ok(bookingService.getBooking());
+    public ResponseEntity<List<BookingEntity>> listAll() {
+        return ResponseEntity.ok(bookingService.getAllBookings());
     }
 
-    //It creates a new reserve, but with a security condition.
-    @PostMapping("/")
-    public ResponseEntity<BookingEntity> saveBooking(@RequestBody BookingEntity booking) {
-        BookingEntity newBooking = bookingService.createBooking(booking);
-        if (newBooking != null) {
-            return ResponseEntity.ok(newBooking);
-        } else {
-            return ResponseEntity.badRequest().build();//This happens when there are no available slots
+    /**
+     * Unified endpoint to process bookings from the web.
+     * It handles passengers, slots, and business logic.
+     */
+    @PostMapping("/create")
+    public ResponseEntity<?> createFromWeb(@RequestBody BookingRequestDTO request) {
+        try {
+            // This replaces saveBooking and createBookingFromWeb
+            BookingEntity newBooking = bookingService.processBooking(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(newBooking);
+        } catch (IllegalStateException e) {
+            // Catching business logic errors (no slots, expired, etc.)
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
         }
     }
 
-    //Filter the database to show only what belongs to a specific user.
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<BookingEntity>> getByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(bookingService.getBookingsByUserId(userId));

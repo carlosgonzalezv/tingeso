@@ -32,6 +32,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/v1/public/**").permitAll()
+                        .requestMatchers("/api/v1/booking/create").authenticated()
+                        .requestMatchers("/api/v1/booking/**").authenticated()
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/v1/user/update/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/user/**").authenticated()
                         .requestMatchers("/api/v1/user/users").hasAnyAuthority("ADMIN", "ROLE_ADMIN")

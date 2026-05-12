@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "booking")
@@ -21,6 +22,7 @@ public class BookingEntity {
     private Long id;
     private LocalDateTime reservation;
     private String status;
+    @Column(name = "totalamount", nullable = false)
     private int totalAmount;
 
     //A user can have multiple reservations
@@ -32,6 +34,11 @@ public class BookingEntity {
     @ManyToOne
     @JoinColumn(name = "packageID", nullable = false)
     private PackTourEntity packTour;
+
+    // En tu BookingEntity actual
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
+    private List<CompanionEntity> companions;
+    private String specialRequests; // Para las "solicitudes especiales"
 
     //public BookingEntity(){}
 }
