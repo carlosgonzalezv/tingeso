@@ -1,7 +1,7 @@
 package com.example.tingeso.Controllers;
 
 import com.example.tingeso.Entities.BookingEntity;
-import com.example.tingeso.Entities.BookingRequestDTO; // Ajusta el import si lo dejaste ahí
+import com.example.tingeso.Config.BookingRequestDTO; // Ajusta el import si lo dejaste ahí
 import com.example.tingeso.Services.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

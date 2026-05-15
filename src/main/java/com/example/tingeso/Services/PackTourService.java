@@ -76,6 +76,20 @@ public class PackTourService {
         packTourRepository.save(packTour);
     }
 
+    public void addSlot(Long id, int quantity) {
+        PackTourEntity pack = packTourRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Paquete no encontrado"));
+
+        pack.setAvailableSlots(pack.getAvailableSlots() + quantity);
+
+        // Si el paquete vuelve a tener cupos, actualizamos su estado
+        if (pack.getAvailableSlots() > 0 && "AGOTADO".equals(pack.getStatus())) {
+            pack.setStatus("DISPONIBLE");
+        }
+
+        packTourRepository.save(pack);
+    }
+
     //borra el paquete aunque en verdad solo lo deja inactivo para que no vuelva a aparecer
     public void deletePackTour(Long id) {
         PackTourEntity pack = packTourRepository.findById(id)

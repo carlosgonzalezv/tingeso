@@ -15,7 +15,7 @@ public class PaymentsController {
 
     @PostMapping("/")
     public ResponseEntity<PaymentsEntity> savePayment(@RequestBody PaymentsEntity payment) {
-        PaymentsEntity newPayment = paymentsService.proccesPayment(payment);
+        PaymentsEntity newPayment = paymentsService.processPayment(payment);
         if (newPayment != null) {
             return ResponseEntity.ok(newPayment);
         } else {

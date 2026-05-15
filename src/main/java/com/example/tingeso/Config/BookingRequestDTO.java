@@ -1,4 +1,4 @@
-package com.example.tingeso.Entities;
+package com.example.tingeso.Config;
 import lombok.Data;
 import java.util.List;
 

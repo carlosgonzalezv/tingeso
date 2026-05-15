@@ -18,10 +18,16 @@ public class PaymentsEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(unique = true, nullable = false)
     private Long id;
-    private String paymentMethod;
+
+    private String paymentMethod; // Ejemplo: "Tarjeta de Crédito", "Débito"
     private int amount;
     private LocalDateTime paymentDate;
-    private String state;
+
+    // NUEVOS CAMPOS PARA LA SIMULACIÓN
+    private String cardNumber;    // Guardaremos algo como "XXXX-XXXX-XXXX-1234"
+    private String cardHolder;    // Nombre del titular ingresado
+    private String expirationDate;
+    private String state;         // "APROBADO", "RECHAZADO"
 
     @ManyToOne
     @JoinColumn(name= "bookingID", nullable = false)
