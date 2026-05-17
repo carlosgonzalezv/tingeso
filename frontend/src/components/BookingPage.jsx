@@ -5,8 +5,8 @@ import { Container, Paper, Typography, TextField, Button, Stack, Box, Divider, A
 import { useKeycloak } from '@react-keycloak/web';
 import BookingService from '../services/BookingService';
 
-    export default function BookingPage() {
-    const { id } = useParams(); // ID del paquete desde la URL
+export default function BookingPage() {
+    const { id } = useParams();
     const navigate = useNavigate();
     const { keycloak } = useKeycloak();
 
@@ -15,16 +15,13 @@ import BookingService from '../services/BookingService';
     const [companionNames, setCompanionNames] = useState([]);
     const [error, setError] = useState(null);
 
-    // Dynamic adjustment of companion inputs
     useEffect(() => {
         const companionsNeeded = Math.max(0, passengerCount - 1);
         setCompanionNames(prev => {
             const newArr = [...prev];
             if (newArr.length < companionsNeeded) {
-                // Add empty strings if count increased
                 return [...newArr, ...Array(companionsNeeded - newArr.length).fill("")];
             }
-            // Trim array if count decreased
             return newArr.slice(0, companionsNeeded);
         });
     }, [passengerCount]);
@@ -35,8 +32,8 @@ import BookingService from '../services/BookingService';
         setCompanionNames(updated);
     };
 
+    // --- CAMBIO AQUÍ: Manejo de la redirección al pago ---
     const handleConfirm = async () => {
-        // Double check for negative numbers before sending
         if (passengerCount < 1) {
             setError("La cantidad de pasajeros debe ser al menos 1.");
             return;
@@ -51,13 +48,19 @@ import BookingService from '../services/BookingService';
         };
 
         try {
-            await BookingService.createBooking(keycloak.token, payload);
-            alert("Reserva registrada con éxito. Estado: PENDIENTE");
-            navigate('/my-bookings'); // Redirigir a la lista de reservas del usuario
+            // Guardamos la respuesta para obtener el ID de la reserva creada
+            const response = await BookingService.createBooking(keycloak.token, payload);
+            const newBooking = response.data;
+
+            // Redirigimos directamente a la página de pago usando el ID de la nueva reserva
+            // Esto cumple con el flujo de "visualizar resumen antes de confirmar" que pide la épica
+            navigate(`/pago/${newBooking.id}`);
+
         } catch (err) {
             setError(err.response?.data || "Ocurrió un error al procesar la reserva.");
         }
     };
+    // ----------------------------------------------------
 
     return (
         <Container maxWidth="md" sx={{ py: 5 }}>
@@ -78,7 +81,6 @@ import BookingService from '../services/BookingService';
                             label="Pasajeros totales"
                             type="number"
                             fullWidth
-                            // VALIDACIÓN: Evita negativos y decimales
                             inputProps={{ min: 1 }}
                             value={passengerCount}
                             onChange={(e) => setPassengerCount(Math.max(1, parseInt(e.target.value) || 1))}
@@ -128,7 +130,7 @@ import BookingService from '../services/BookingService';
                             onClick={handleConfirm}
                             sx={{ bgcolor: '#FB8C00', px: 5, '&:hover': { bgcolor: '#e67e00' } }}
                         >
-                            Confirmar Reserva
+                            Confirmar y Proceder al Pago
                         </Button>
                     </Box>
                 </Stack>

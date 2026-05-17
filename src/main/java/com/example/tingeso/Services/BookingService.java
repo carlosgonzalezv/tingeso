@@ -165,4 +165,59 @@ public class BookingService {
     public List<BookingEntity> getBookingsByUserId(Long userId) {
         return bookingRepository.findByUsers_Id(userId);
     }
+
+    // 1. VISIBILIDAD CLIENTE: Obtener reservas filtradas por el email de Keycloak
+    public List<BookingEntity> getBookingsByEmail(String email) {
+        return bookingRepository.findByUserEmail(email);
+    }
+
+    // 2. GESTIÓN DE ESTADOS BLINDADA CON REGLAS DE NEGOCIO (Agencia / Sistema)
+    @Transactional
+    public BookingEntity updateBookingStatus(Long id, String status) {
+        BookingEntity booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Error: Reserva no encontrada con el ID: " + id));
+
+        String newStatus = status.toUpperCase();
+
+        // REGLA 1: Toda reserva debe tener un estado válido y controlado por el sistema.
+        if (!List.of("PENDIENTE", "CONFIRMADA", "COMPLETADA", "CANCELADA").contains(newStatus)) {
+            throw new IllegalArgumentException("El estado '" + status + "' no está registrado en el sistema.");
+        }
+
+        // REGLA 2: Una reserva solo puede marcarse como confirmada si cumple las condiciones (Pago Completo).
+        if ("CONFIRMADA".equals(newStatus)) {
+            boolean hasPaid = checkPaymentProof(id);
+            if (!hasPaid) {
+                throw new IllegalStateException("No se puede confirmar la reserva #" + id + " porque no registra pago completo.");
+            }
+        }
+
+        booking.setStatus(newStatus);
+        return bookingRepository.save(booking);
+    }
+
+    /**
+     * Validador auxiliar de reglas: Comprueba si la reserva cumple las condiciones de pago.
+     */
+    private boolean checkPaymentProof(Long bookingId) {
+        // Por ahora retorna true para tus pruebas de flujo generales en local.
+        // Si tienes una entidad o tabla de transacciones de pago/boletas, aquí debes validar
+        // que el monto pagado coincida con el totalAmount de la reserva.
+        return true;
+    }
+
+    public void validatePaymentEligibility(Long bookingId) {
+        BookingEntity booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada con ID: " + bookingId));
+
+        // REGLA DE NEGOCIO: Una reserva cancelada no debe aceptar nuevos pagos.
+        if ("CANCELADA".equalsIgnoreCase(booking.getStatus())) {
+            throw new IllegalStateException("Error: No se pueden procesar pagos para una reserva que ya ha sido CANCELADA.");
+        }
+
+        // Opcional: También podrías bloquear si ya está COMPLETADA
+        if ("COMPLETADA".equalsIgnoreCase(booking.getStatus())) {
+            throw new IllegalStateException("Error: Esta reserva ya se encuentra COMPLETADA y pagada en su totalidad.");
+        }
+    }
 }

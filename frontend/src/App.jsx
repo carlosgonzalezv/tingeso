@@ -3,13 +3,20 @@ import { useKeycloak } from '@react-keycloak/web';
 import { syncUserWithBackend } from './services/UserService';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline, Box, Typography, Button } from '@mui/material';
+
+// Importación de componentes existentes
 import MainPage from './components/MainPage.jsx';
 import PrivateRoute from './components/PrivateRoute';
 import UserList from './components/UserList.jsx';
 import Profile from './components/Profile';
 import Navbar from './components/Navbar';
 import PublishPackage from './components/PublishPackage';
-import BookingPage from './components/BookingPage'; // <--- Importamos la nueva página
+import BookingPage from './components/BookingPage';
+import MyBookings from './components/MyBookings';
+import ManageBookings from './components/ManageBookings';
+
+// IMPORTACIÓN DE LA NUEVA PÁGINA DE PAGO (Épica 5)
+import PaymentPage from './components/PaymentPage';
 
 const theme = createTheme({
     palette: {
@@ -22,9 +29,9 @@ const theme = createTheme({
     },
 });
 
-
 function App() {
     const { keycloak, initialized } = useKeycloak();
+
     useEffect(() => {
         if (initialized && keycloak.authenticated) {
             const performSync = async () => {
@@ -46,10 +53,11 @@ function App() {
                 <Navbar />
                 <Box sx={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
                     <Routes>
+                        {/* Rutas Públicas */}
                         <Route path="/" element={<MainPage />} />
                         <Route path="/perfil" element={<Profile />} />
 
-                        {/* NUEVA RUTA DE RESERVA: Protegida para usuarios logueados */}
+                        {/* RUTA DE RESERVA: Protegida */}
                         <Route
                             path="/booking/:id"
                             element={
@@ -59,6 +67,17 @@ function App() {
                             }
                         />
 
+                        {/* NUEVA RUTA DE PAGO: Protegida (Épica 5) */}
+                        <Route
+                            path="/pago/:bookingId"
+                            element={
+                                <PrivateRoute>
+                                    <PaymentPage />
+                                </PrivateRoute>
+                            }
+                        />
+
+                        {/* Rutas de Administrador */}
                         <Route
                             path="/publish-package"
                             element={
@@ -67,6 +86,25 @@ function App() {
                                 </PrivateRoute>
                             }
                         />
+
+                        <Route
+                            path="/my-bookings"
+                            element={
+                                <PrivateRoute>
+                                    <MyBookings />
+                                </PrivateRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/manage-bookings"
+                            element = {
+                        <PrivateRoute role="ADMIN">
+                            <ManageBookings />
+                        </PrivateRoute>
+                    }
+                        />
+
                         <Route
                             path="/usuarios"
                             element={

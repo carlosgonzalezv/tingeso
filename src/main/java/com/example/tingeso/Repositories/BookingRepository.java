@@ -18,6 +18,7 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
     // Counts how many "PAGADA" bookings a specific user has
     long countByUsers_EmailAndStatus(String email, String status);
     boolean existsByUsers_EmailAndStatusAndReservationAfter(String email, String status, LocalDateTime date);
+    List<BookingEntity> findByUserEmail(String userEmail);
 
 }
 

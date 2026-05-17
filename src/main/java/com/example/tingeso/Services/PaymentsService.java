@@ -8,6 +8,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class PaymentsService {
@@ -18,32 +19,38 @@ public class PaymentsService {
     @Autowired
     private BookingRepository bookingRepository;
 
+    public List<PaymentsEntity> getPayments() {
+        return paymentsRepository.findAll();
+    }
+
     /**
-     * Simula el comportamiento de una pasarela de pago real (Transbank/Stripe style).
-     * Garantiza pago total, éxito asumido y actualización de estado.
+     * Proceso de pago simulado con ingreso de datos de tarjeta (CVV, Expiración).
+     * No realiza validación externa, asumiendo éxito si las reglas de negocio se cumplen.
      */
     @Transactional
     public PaymentsEntity processPayment(PaymentsEntity payment) {
         // 1. ASOCIACIÓN OBLIGATORIA
+        // Nota: Asegúrate que en PaymentsEntity el objeto se llame bookingID
         BookingEntity booking = bookingRepository.findById(payment.getBookingID().getId())
-                .orElseThrow(() -> new RuntimeException("Error: No existe la reserva."));
+                .orElseThrow(() -> new RuntimeException("Error: No existe la reserva asociada."));
 
-        // 2. REGLA DE MEDIO DE PAGO DEFINIDO: Solo tarjeta de crédito simulada
+        // 2. REGLA DE MEDIO DE PAGO: Solo tarjeta de crédito simulada
         if (!"Tarjeta de Crédito".equalsIgnoreCase(payment.getPaymentMethod())) {
-            throw new IllegalArgumentException("Error: El sistema solo acepta 'Tarjeta de Crédito' como medio de pago.");
+            throw new IllegalArgumentException("Error: Solo se permite 'Tarjeta de Crédito' simulada.");
         }
 
         // 3. REGLA DE UNICIDAD: Solo un pago por reserva
+        // Nota: El método findByBookingID debe estar definido en tu PaymentsRepository
         if (paymentsRepository.findByBookingID(booking.getId()).isPresent()) {
             throw new IllegalStateException("Esta reserva ya cuenta con un pago registrado.");
         }
 
-        // 4. VALIDACIÓN DE MONTO TOTAL Y POSITIVO (> 0)
+        // 4. VALIDACIÓN DE MONTO TOTAL Y POSITIVO
         if (payment.getAmount() <= 0) {
             throw new IllegalArgumentException("El monto debe ser mayor a cero.");
         }
         if (payment.getAmount() != booking.getTotalAmount()) {
-            throw new IllegalArgumentException("El monto no corresponde al total de la reserva ($" + booking.getTotalAmount() + ")");
+            throw new IllegalArgumentException("El monto debe ser el total de la reserva: $" + booking.getTotalAmount());
         }
 
         // 5. REGLA DE ESTADO: No pagar reservas canceladas o expiradas
@@ -52,20 +59,30 @@ public class PaymentsService {
         }
 
         // 6. ACTUALIZACIÓN AUTOMÁTICA A CONFIRMADA
+        // Cumplimos con la regla de cambiar el estado tras el pago exitoso
         booking.setStatus("CONFIRMADA");
         bookingRepository.save(booking);
 
-        // 7. CONSERVACIÓN DE METADATOS Y REGISTRO (Trazabilidad)
-        // El ID se genera automáticamente gracias a @GeneratedValue en la entidad
+        // 7. PROCESAMIENTO DE DATOS SIMULADOS (Número, Expiración, CVV)
+        // Seteamos la fecha actual de la transacción
         payment.setPaymentDate(LocalDateTime.now());
         payment.setState("EXITOSO");
 
-        // Enmascaramiento de tarjeta para la base de datos
+        // Enmascaramiento de tarjeta (Simulación de seguridad real)
+        // Esto permite que el usuario ingrese su tarjeta pero solo guardamos los últimos 4
         if (payment.getCardNumber() != null && payment.getCardNumber().length() > 4) {
-            String lastFour = payment.getCardNumber().substring(payment.getCardNumber().length() - 4);
+            String fullCard = payment.getCardNumber();
+            String lastFour = fullCard.substring(fullCard.length() - 4);
             payment.setCardNumber("XXXX-XXXX-XXXX-" + lastFour);
         }
 
+        // Guardamos el registro del pago (incluyendo titular y expiración si están en tu Entity)
         return paymentsRepository.save(payment);
     }
+
+    public PaymentsEntity getPaymentByBooking(Long bookingID) {
+        return paymentsRepository.findByBookingID(bookingID).orElse(null);
+    }
+
+
 }
