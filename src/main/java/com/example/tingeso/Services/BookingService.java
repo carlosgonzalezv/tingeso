@@ -5,6 +5,7 @@ import com.example.tingeso.Config.BookingRequestDTO;
 import com.example.tingeso.Config.BookingProperties;
 import com.example.tingeso.Entities.*;
 import com.example.tingeso.Repositories.BookingRepository;
+import com.example.tingeso.Repositories.PackTourRankingProd;
 import com.example.tingeso.Repositories.PackTourRepository;
 import com.example.tingeso.Repositories.UserRepository;
 import jakarta.transaction.Transactional;
@@ -219,5 +220,12 @@ public class BookingService {
         if ("COMPLETADA".equalsIgnoreCase(booking.getStatus())) {
             throw new IllegalStateException("Error: Esta reserva ya se encuentra COMPLETADA y pagada en su totalidad.");
         }
+    }
+    public List<BookingEntity> getSalesByPeriod(LocalDateTime start, LocalDateTime end) {
+        return bookingRepository.findByReservationBetweenOrderByReservationDesc(start, end);
+    }
+
+    public List<PackTourRankingProd> getPackageRanking(LocalDateTime start, LocalDateTime end) {
+        return bookingRepository.getPackageRankingByPeriod(start, end);
     }
 }

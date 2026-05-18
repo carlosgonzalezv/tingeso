@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_URL = "http://localhost:8080/api/v1/booking";
 
-// 1. Crear una nueva reserva
+// 1. Create a new booking
 const createBooking = async (token, bookingData) => {
     try {
         return await axios.post(`${API_URL}/create`, bookingData, {
@@ -16,7 +16,7 @@ const createBooking = async (token, bookingData) => {
     }
 };
 
-// 2. VISIBILIDAD CLIENTE: Obtener las reservas del usuario autenticado por su correo
+// 2. CLIENT VISIBILITY: Get bookings of authenticated user by email
 const getBookingsByEmail = async (token, email) => {
     try {
         const response = await axios.get(`${API_URL}/my-bookings/${email}`, {
@@ -31,7 +31,7 @@ const getBookingsByEmail = async (token, email) => {
     }
 };
 
-// 3. VISIBILIDAD AGENCIA: Obtener todas las reservas del sistema (Rol ADMIN)
+// 3. AGENCY VISIBILITY: Get all bookings in the system (ADMIN Role)
 const getAllBookings = async (token) => {
     try {
         const response = await axios.get(`${API_URL}/`, {
@@ -46,10 +46,9 @@ const getAllBookings = async (token) => {
     }
 };
 
-// 4. GESTIÓN DE ESTADOS: Actualizar el estado de una reserva (Rol ADMIN)
+// 4. STATUS MANAGEMENT: Update booking status (ADMIN Role)
 const updateBookingStatus = async (token, bookingId, newStatus) => {
     try {
-        // SOLUCIÓN LIMPIA: Pasamos un objeto vacío como body ({}) y los params estructurados
         const response = await axios.put(`${API_URL}/${bookingId}/status`, {}, {
             params: {
                 newStatus: newStatus
@@ -65,9 +64,59 @@ const updateBookingStatus = async (token, bookingId, newStatus) => {
     }
 };
 
+// 5. REPORTS: Get general dashboard metrics (ADMIN Role)
+const getDashboardStats = async (token) => {
+    try {
+        const response = await axios.get(`${API_URL}/dashboard/stats`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error en BookingService (getDashboardStats):", error);
+        throw error;
+    }
+};
+
+// 6. REPORTS: Get chronological sales list by date range (ADMIN Role)
+const getSalesReport = async (token, start, end) => {
+    try {
+        const response = await axios.get(`${API_URL}/reports/sales`, {
+            params: { start, end },
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error en BookingService (getSalesReport):", error);
+        throw error;
+    }
+};
+
+// 7. REPORTS: Get package demand ranking by date range (ADMIN Role)
+const getRankingReport = async (token, start, end) => {
+    try {
+        const response = await axios.get(`${API_URL}/reports/ranking`, {
+            params: { start, end },
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error en BookingService (getRankingReport):", error);
+        throw error;
+    }
+};
+
 export default {
     createBooking,
     getBookingsByEmail,
     getAllBookings,
-    updateBookingStatus
+    updateBookingStatus,
+    getDashboardStats,
+    getSalesReport,
+    getRankingReport
 };

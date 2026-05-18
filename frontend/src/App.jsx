@@ -14,6 +14,7 @@ import PublishPackage from './components/PublishPackage';
 import BookingPage from './components/BookingPage';
 import MyBookings from './components/MyBookings';
 import ManageBookings from './components/ManageBookings';
+import DashboardReports from './components/DashboardReports';
 
 // IMPORTACIÓN DE LA NUEVA PÁGINA DE PAGO (Épica 5)
 import PaymentPage from './components/PaymentPage';
@@ -103,6 +104,15 @@ function App() {
                             <ManageBookings />
                         </PrivateRoute>
                     }
+                        />
+
+                        <Route
+                            path="/dashboard-reports"
+                            element={
+                                <PrivateRoute role="ADMIN">
+                                    <DashboardReports />
+                                </PrivateRoute>
+                            }
                         />
 
                         <Route
