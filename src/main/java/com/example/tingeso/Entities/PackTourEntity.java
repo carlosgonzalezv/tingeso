@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Tourist Package")
+@Table(name = "Tourist_Package")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,11 +25,12 @@ public class PackTourEntity {
     private String description;
 
     @Min(value = 1, message = "el precio es mayor a 0")
-    private String price;
+    private Integer price;
 
     @Min(value = 1, message = "Los cupos totales deben ser al menos 1")
     private Integer totalSlots;
     @Min(value = 0, message = "Los cupos disponibles no pueden ser negativos")
+    @Column(name = "available_slots")
     private Integer availableSlots;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")

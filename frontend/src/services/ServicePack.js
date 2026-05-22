@@ -8,12 +8,17 @@ const PACKS_URL = "/api/v1/tourPack/";
 
 const getPackages = async (token) => {
     try {
-        // Esta era la clave: el token se pasaba en el header
-        const response = await axios.get(PACKS_URL, {
-            headers: {
+        const config = {};
+
+        // CORREGIDO: Solo inyectamos el header si el token realmente existe
+        if (token) {
+            config.headers = {
                 Authorization: `Bearer ${token}`
-            }
-        });
+            };
+        }
+
+        // Pasamos el objeto 'config' que estará vacío para invitados
+        const response = await axios.get(PACKS_URL, config);
         return response.data;
     } catch (error) {
         console.error("Error al obtener paquetes:", error);

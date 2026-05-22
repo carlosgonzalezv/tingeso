@@ -35,14 +35,15 @@ const MainPage = () => {
 
     // Función para cargar datos (usando el Service)
     // Busca esta parte en tu archivo MainPage.jsx
+    // FUNCIÓN CORREGIDA: Carga datos con o sin token de sesión
     const loadData = useCallback(async () => {
-        if (keycloak.token) { // Solo si hay token
-            try {
-                const data = await PackService.getPackages(keycloak.token);
-                setPackages(data);
-            } catch (error) {
-                console.error("Error al cargar paquetes:", error);
-            }
+        try {
+            // Pasamos el token si existe; si no, irá como undefined o null
+            // Tu PackService debe estar preparado para no enviarlo en los headers si no existe
+            const data = await PackService.getPackages(keycloak.token);
+            setPackages(data || []);
+        } catch (error) {
+            console.error("Error al cargar paquetes de forma pública/privada:", error);
         }
     }, [keycloak.token]);
 

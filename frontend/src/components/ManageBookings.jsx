@@ -20,11 +20,12 @@ export default function ManageBookings() {
                         const castedBooking = booking;
                         return {
                             id: castedBooking?.id ? String(castedBooking.id) : '',
-                            packageName: castedBooking?.touristPackage?.name || "Destino Turístico",
-                            userEmail: castedBooking?.userEmail || "Cliente",
+                            // CORREGIDO: Mapeo exacto de las entidades relacionales de Spring Boot
+                            packageName: castedBooking?.packTourID?.name || castedBooking?.tourPackID?.name || "Destino Turístico",
+                            userEmail: castedBooking?.userID?.email || castedBooking?.userEmail || "Cliente",
                             totalAmount: Number(castedBooking?.totalAmount || 0),
                             passengerCount: Number(castedBooking?.passengerCount || 1),
-                            dateText: castedBooking?.date || "Reciente",
+                            dateText: castedBooking?.reservationDate ? castedBooking.reservationDate.replace('T', ' ') : "Reciente",
                             status: castedBooking?.status ? String(castedBooking.status).toUpperCase() : "PENDIENTE"
                         };
                     });

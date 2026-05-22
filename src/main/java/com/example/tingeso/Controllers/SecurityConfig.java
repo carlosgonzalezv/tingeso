@@ -32,8 +32,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/v1/public/**").permitAll()
+
+                        // Permite ver paquetes a cualquiera
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/tourPack/**").permitAll()
+
+                        // Proteger reservas
                         .requestMatchers("/api/v1/booking/create").authenticated()
                         .requestMatchers("/api/v1/booking/**").authenticated()
+
+                        // NUEVO: Proteger las rutas de pagos para que Spring Security no las rebote
+                        .requestMatchers("/api/v1/payments/**").authenticated()
+
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/v1/user/update/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/user/**").authenticated()
                         .requestMatchers("/api/v1/user/users").hasAnyAuthority("ADMIN", "ROLE_ADMIN")

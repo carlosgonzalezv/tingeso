@@ -27,6 +27,6 @@ public class UserEntity {
     private String nationality;
     @Column(name = "id_document", nullable = false)
     private String idDocument;
-    private String statement; //NOTA DE RECORDAR, REVISA BIEN LA BASE DE DATOS PORQUE SALE QUE EL ADMIN ES USER
+    private String statement;
 
 }

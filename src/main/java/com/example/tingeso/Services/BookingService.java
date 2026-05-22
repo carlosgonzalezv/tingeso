@@ -85,7 +85,8 @@ public class BookingService {
         booking.setSpecialRequests(request.getSpecialRequests());
 
         // Cálculo financiero detallado
-        int unitPrice = Integer.parseInt(pack.getPrice());
+        // LÍNEA NUEVA CORREGIDA:
+        int unitPrice = pack.getPrice();
 
         // Aquí recibimos la "caja" con todo el desglose
         BookingCalculationResult calculation = calculateDetailedTotal(user, unitPrice, request.getPassengerCount());
@@ -169,7 +170,7 @@ public class BookingService {
 
     // 1. VISIBILIDAD CLIENTE: Obtener reservas filtradas por el email de Keycloak
     public List<BookingEntity> getBookingsByEmail(String email) {
-        return bookingRepository.findByUserEmail(email);
+        return bookingRepository.findByUsers_Email(email);
     }
 
     // 2. GESTIÓN DE ESTADOS BLINDADA CON REGLAS DE NEGOCIO (Agencia / Sistema)

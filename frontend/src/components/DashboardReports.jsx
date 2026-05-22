@@ -13,20 +13,20 @@ export default function DashboardReports() {
     const [rankingData, setRankingData] = useState([]);
     const [error, setError] = useState(null);
 
-    const handleConsultar = () => {
+    const handleFetchReport = () => {
         if (!startDate || !endDate) {
             alert("Por favor selecciona ambas fechas.");
             return;
         }
 
-        // RULE VALIDATION: Start date cannot be after end date
+        // Validación de reglas de negocio
         if (new Date(startDate) > new Date(endDate)) {
             setError("La fecha de inicio no puede ser posterior a la fecha de término.");
             return;
         }
 
         setError(null);
-        // ISO format conversion required for LocalDateTime.parse() in Spring Boot
+        // Conversión a formato ISO para el LocalDateTime del backend
         const startISO = `${startDate}T00:00:00`;
         const endISO = `${endDate}T23:59:59`;
 
@@ -34,14 +34,14 @@ export default function DashboardReports() {
             BookingService.getSalesReport(keycloak.token, startISO, endISO)
                 .then(setSalesData)
                 .catch(err => {
-                    console.error("Error en DashboardReports (Sales):", err);
+                    console.error("Error fetching sales report:", err);
                     setError("No se pudo obtener el listado de ventas para ese rango.");
                 });
         } else {
             BookingService.getRankingReport(keycloak.token, startISO, endISO)
                 .then(setRankingData)
                 .catch(err => {
-                    console.error("Error en DashboardReports (Ranking):", err);
+                    console.error("Error fetching ranking report:", err);
                     setError("No se pudo obtener el ranking de paquetes.");
                 });
         }
@@ -59,7 +59,7 @@ export default function DashboardReports() {
 
                 {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-                {/* Date range filters */}
+                {/* Filtros por rango de fechas */}
                 <Grid container spacing={3} sx={{ my: 1 }} alignItems="center">
                     <Grid item xs={12} sm={4}>
                         <TextField
@@ -82,7 +82,7 @@ export default function DashboardReports() {
                         />
                     </Grid>
                     <Grid item xs={12} sm={4}>
-                        <Button variant="contained" color="primary" fullWidth size="large" onClick={handleConsultar}>
+                        <Button variant="contained" color="primary" fullWidth size="large" onClick={handleFetchReport}>
                             Procesar Reporte
                         </Button>
                     </Grid>
@@ -95,33 +95,29 @@ export default function DashboardReports() {
                     </Tabs>
                 </Box>
 
-                {/* REPORT 1: SALES CHRONOLOGICAL LIST */}
-                {/* REPORT 1: SALES CHRONOLOGICAL LIST */}
+                {/* REPORTE 1: LISTADO CRONOLÓGICO DE VENTAS */}
                 {tabIndex === 0 && (
                     <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: '8px' }}>
                         <Table>
                             <TableHead sx={{ bgcolor: '#37474f' }}>
                                 <TableRow>
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Fecha Operación</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Cliente</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Paquete</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Pasajeros</TableCell> {/* <-- AGREGADO */}
+                                    <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Cliente (Email)</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Pasajeros</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Monto Total</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Monto Pagado</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Estado</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {salesData.map((row) => (
                                     <TableRow key={row.id} hover>
-                                        <TableCell>{row.reservation ? row.reservation.replace('T', ' ') : 'N/A'}</TableCell>
-                                        <TableCell>{row.users?.email || "Cliente"}</TableCell>
-                                        <TableCell>{row.packTour?.name || "Destino"}</TableCell>
-                                        <TableCell align="center">{row.passengersCount || 1} pas.</TableCell> {/* <-- AGREGADO (Muestra la cantidad real) */}
-                                        <TableCell>${row.totalAmount?.toLocaleString('es-CL')} CLP</TableCell>
+                                        <TableCell>{row.reservationDate ? row.reservationDate.replace('T', ' ') : 'N/A'}</TableCell>
+                                        <TableCell>{row.userID?.email || row.userEmail || "Cliente"}</TableCell>
+                                        <TableCell align="center">{row.passengerCount || 1} pas.</TableCell>
                                         <TableCell>${row.totalAmount?.toLocaleString('es-CL')} CLP</TableCell>
                                         <TableCell style={{
                                             fontWeight: 'bold',
+                                            // Se evalúan las cadenas de estado que vienen en español de la BD
                                             color: row.status === 'CONFIRMADA' || row.status === 'COMPLETADA' ? '#2e7d32' : '#f57c00'
                                         }}>
                                             {row.status}
@@ -130,8 +126,8 @@ export default function DashboardReports() {
                                 ))}
                                 {salesData.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={7} align="center" sx={{ py: 3, color: 'text.secondary' }}>
-                                            No se registran ventas válidas en el período ingresado. Haga clic en "Procesar Reporte".
+                                        <TableCell colSpan={5} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                                            No se registran ventas válidas en el período ingresado.
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -140,8 +136,7 @@ export default function DashboardReports() {
                     </TableContainer>
                 )}
 
-                {/* REPORT 2: PACKAGES DEMAND RANKING */}
-                {/* REPORT 2: PACKAGES DEMAND RANKING */}
+                {/* REPORTE 2: RANKING DE DEMANDA (Variables en inglés según el DTO corregido) */}
                 {tabIndex === 1 && (
                     <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: '8px' }}>
                         <Table>
@@ -150,7 +145,7 @@ export default function DashboardReports() {
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Posición</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Paquete Turístico</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Cantidad de Ventas</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Total Pasajeros</TableCell> {/* <-- AGREGADO */}
+                                    <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Total Pasajeros</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Monto Total Generado</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -159,8 +154,9 @@ export default function DashboardReports() {
                                     <TableRow key={index} hover sx={{ bgcolor: index === 0 ? '#e8f5e9' : 'inherit' }}>
                                         <TableCell><strong>#{index + 1}</strong></TableCell>
                                         <TableCell style={{ fontWeight: 'bold' }}>{row.packageName}</TableCell>
-                                        <TableCell>{row.totalBookings} reservas</TableCell>
-                                        <TableCell>{row.totalPassengers || 0} pasajeros</TableCell> {/* <-- AGREGADO */}
+                                        {/* TODO EN INGLÉS SÓLIDO: */}
+                                        <TableCell>{row.totalBookings || 0} bookings</TableCell>
+                                        <TableCell>{row.totalPassengers || 0} passengers</TableCell>
                                         <TableCell sx={{ color: '#2e7d32', fontWeight: 'bold' }}>
                                             ${row.generatedAmount?.toLocaleString('es-CL')} CLP
                                         </TableCell>
@@ -169,7 +165,7 @@ export default function DashboardReports() {
                                 {rankingData.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={5} align="center" sx={{ py: 3, color: 'text.secondary' }}>
-                                            No se registra demanda en el período ingresado. Haga clic en "Procesar Reporte".
+                                            No se registra demanda en el período ingresado.
                                         </TableCell>
                                     </TableRow>
                                 )}

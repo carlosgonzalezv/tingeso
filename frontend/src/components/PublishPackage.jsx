@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useKeycloak } from '@react-keycloak/web';
 import { Container, Typography, TextField, Button, Grid, Paper, InputAdornment, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import CalendarMonth from '@mui/icons-material/CalendarMonth';
@@ -6,6 +7,7 @@ import axios from 'axios';
 
 function PublishPackage() {
     const navigate = useNavigate();
+    const { keycloak } = useKeycloak();
     const [error, setError] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
@@ -19,6 +21,10 @@ function PublishPackage() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        // Si es precio o cupos, no permitimos que digiten valores menores a 0
+        if ((name === 'price' || name === 'totalSlots') && value !== '' && Number(value) < 0) {
+            return; // Ignora el cambio si es negativo
+        }
         setFormData({ ...formData, [name]: value });
     };
 
@@ -26,20 +32,26 @@ function PublishPackage() {
         e.preventDefault();
         setError(null);
 
+        // Dentro de PublishPackage.jsx -> handleSubmit
+        // En PublishPackage.jsx -> Modifica el payload para que quede así:
         const payload = {
             name: formData.name,
             destination: formData.destination,
             description: formData.description,
-            price: String(formData.price),
-            totalSlots: parseInt(formData.totalSlots),
-            availPlaces: parseInt(formData.totalSlots),
-            startDate: `${formData.startDate}T00:00:00`,
-            finishDate: `${formData.finishDate}T00:00:00`,
+            price: Number(formData.price),
+            totalSlots: parseInt(formData.totalSlots),      // Tu variable en el front
+            availableSlots: parseInt(formData.totalSlots),  // Formato inglés nuevo
+            availPlaces: parseInt(formData.totalSlots),     // Tu formato antiguo por si acaso
             status: "DISPONIBLE"
         };
 
         try {
-            const response = await axios.post('http://localhost:8080/api/v1/tourPack/', payload);
+            // Agregamos el header con el Bearer Token obtenido de Keycloak
+            const response = await axios.post('http://localhost:8080/api/v1/tourPack/', payload, {
+                headers: {
+                    Authorization: `Bearer ${keycloak?.token}`
+                }
+            });
 
             if (response.status === 200) {
                 alert("Paquete publicado con éxito");
@@ -73,8 +85,17 @@ function PublishPackage() {
                             <TextField fullWidth label="Destino" name="destination" value={formData.destination} onChange={handleChange} required />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Precio" name="price" type="number" value={formData.price} onChange={handleChange} required
-                                       InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }} />
+                            <TextField
+                                fullWidth
+                                label="Precio"
+                                name="price"
+                                type="number"
+                                value={formData.price}
+                                onChange={handleChange}
+                                required
+                                inputProps={{ min: "0" }} // <-- Bloquea precios negativos
+                                InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                            />
                         </Grid>
 
                         {/* Fila 3: Descripción SOLA (xs=12 para que use todo el ancho) */}
@@ -135,7 +156,16 @@ function PublishPackage() {
 
                         {/* Fila 5: Cupos Totales */}
                         <Grid item xs={12}>
-                            <TextField fullWidth label="Cupos Totales" name="totalSlots" type="number" value={formData.totalSlots} onChange={handleChange} required />
+                            <TextField
+                                fullWidth
+                                label="Cupos Totales"
+                                name="totalSlots"
+                                type="number"
+                                value={formData.totalSlots}
+                                onChange={handleChange}
+                                required
+                                inputProps={{ min: "1" }} // <-- Bloquea cupos negativos o en cero
+                            />
                         </Grid>
 
                         {/* Fila 6: Botones */}
