@@ -16,7 +16,6 @@ const getPackages = async (token) => {
                 Authorization: `Bearer ${token}`
             };
         }
-
         // Pasamos el objeto 'config' que estará vacío para invitados
         const response = await axios.get(PACKS_URL, config);
         return response.data;

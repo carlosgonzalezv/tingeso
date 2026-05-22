@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Box, Typography, TextField, Button, Paper, Divider, Alert, CircularProgress } from '@mui/material';
-import { useKeycloak } from "@react-keycloak/web";
+import { useKeycloak } from "@react-keycloak/web"; // <-- 1. IMPORTA EL HOOK DE KEYCLOAK
 import bookingService from "../services/BookingService";
 import paymentService from "../services/PaymentService";
 
 const PaymentPage = () => {
     const { bookingId } = useParams();
     const navigate = useNavigate();
-    const { keycloak, initialized } = useKeycloak();
+    const { keycloak, initialized } = useKeycloak(); // <-- 2. EXTRAE KEYCLOAK
 
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -24,8 +24,9 @@ const PaymentPage = () => {
     });
 
     useEffect(() => {
+        // 3. CORREGIDO: Esperamos que Keycloak esté listo y haya un token para consultar la API
         if (initialized && keycloak.token) {
-            bookingService.getBookingById(keycloak.token, bookingId)
+            bookingService.getBookingById(keycloak.token, bookingId) // <-- Usamos el nuevo método con token
                 .then(response => {
                     setBooking(response.data);
                     setLoading(false);
@@ -47,17 +48,18 @@ const PaymentPage = () => {
         setProcessing(true);
         setError(null);
 
-        // CORREGIDO: Payload alineado con las propiedades de la entidad Java
+        // Construimos el objeto para el Backend
         const paymentPayload = {
-            bookingID: { id: Number(booking.id) },
-            amount: Number(booking.totalAmount),
-            paymentMethod: "Tarjeta de Crédito",
-            cardNumber: formData.cardNumber,
+            bookingID: { id: booking.id },
+            amount: booking.totalAmount, // Regla: Pago Total
+            paymentMethod: "Tarjeta de Crédito", // Regla: Medio definido
+            cardNumber: formData.cardNumber, // Dato simulado
+            // Nota: Expiración y CVV se envían pero el backend solo asume éxito
         };
 
         try {
             await paymentService.processPayment(paymentPayload);
-            setSuccess(true);
+            setSuccess(true); // Regla: Mostrar confirmación clara
         } catch (err) {
             setError(err.response?.data || "Error al procesar el pago");
         } finally {
@@ -79,20 +81,19 @@ const PaymentPage = () => {
             <Paper elevation={3} sx={{ p: 4, maxWidth: 600, width: '100%' }}>
                 <Typography variant="h4" gutterBottom color="primary">Procesar Pago</Typography>
 
+                {/* 3.2.5 Resumen del pago antes de confirmar */}
                 <Box sx={{ bgcolor: '#f5f5f5', p: 2, mb: 3, borderRadius: 1 }}>
                     <Typography variant="h6">Resumen de Reserva</Typography>
                     <Divider sx={{ my: 1 }} />
-                    {/* CORREGIDO: Mapeo seguro usando packTourID o tourPackID */}
-                    <Typography>
-                        <strong>Paquete:</strong> {booking.packTourID?.name || booking.tourPackID?.name || "Destino seleccionado"}
-                    </Typography>
+                    <Typography><strong>Paquete:</strong> {booking.touristPackage?.name}</Typography>
                     <Typography variant="h5" color="secondary" sx={{ mt: 1 }}>
-                        Total a pagar: ${booking.totalAmount?.toLocaleString('es-CL')} CLP
+                        Total a pagar: ${booking.totalAmount}
                     </Typography>
                 </Box>
 
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
+                {/* Formulario de Pago Simulado */}
                 <form onSubmit={handleSubmit}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         <TextField
@@ -120,7 +121,7 @@ const PaymentPage = () => {
                             disabled={processing}
                             sx={{ mt: 2 }}
                         >
-                            {processing ? "Procesando..." : `Pagar $${booking.totalAmount?.toLocaleString('es-CL')} CLP`}
+                            {processing ? "Procesando..." : `Pagar $${booking.totalAmount}`}
                         </Button>
                     </Box>
                 </form>

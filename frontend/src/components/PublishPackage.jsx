@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useKeycloak } from '@react-keycloak/web';
 import { Container, Typography, TextField, Button, Grid, Paper, InputAdornment, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useKeycloak } from '@react-keycloak/web';
 import CalendarMonth from '@mui/icons-material/CalendarMonth';
 import axios from 'axios';
 
@@ -21,10 +21,12 @@ function PublishPackage() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+
         // Si es precio o cupos, no permitimos que digiten valores menores a 0
         if ((name === 'price' || name === 'totalSlots') && value !== '' && Number(value) < 0) {
             return; // Ignora el cambio si es negativo
         }
+
         setFormData({ ...formData, [name]: value });
     };
 
@@ -32,16 +34,15 @@ function PublishPackage() {
         e.preventDefault();
         setError(null);
 
-        // Dentro de PublishPackage.jsx -> handleSubmit
-        // En PublishPackage.jsx -> Modifica el payload para que quede así:
         const payload = {
             name: formData.name,
             destination: formData.destination,
             description: formData.description,
-            price: Number(formData.price),
-            totalSlots: parseInt(formData.totalSlots),      // Tu variable en el front
-            availableSlots: parseInt(formData.totalSlots),  // Formato inglés nuevo
-            availPlaces: parseInt(formData.totalSlots),     // Tu formato antiguo por si acaso
+            price: String(formData.price),
+            totalSlots: parseInt(formData.totalSlots),
+            availPlaces: parseInt(formData.totalSlots),
+            startDate: `${formData.startDate}T00:00:00`,
+            finishDate: `${formData.finishDate}T00:00:00`,
             status: "DISPONIBLE"
         };
 

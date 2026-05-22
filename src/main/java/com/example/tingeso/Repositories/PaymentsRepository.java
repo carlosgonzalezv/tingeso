@@ -10,8 +10,8 @@ import java.util.Optional;
 @Repository
 public interface PaymentsRepository extends JpaRepository<PaymentsEntity, Long> {
     //Check if the payment is associated with any reservation
-    Optional<PaymentsEntity> findByBookingID_Id(Long bookingID);
+    Optional<PaymentsEntity> findByBookingID(Long bookingID);
 
     //Check the payment method that was used
-    List<PaymentsEntity> findByPaymentMethod(String paymentMethod);
+    List<PaymentsEntity> findBypaymentMethod(String paymentMethod);
 }

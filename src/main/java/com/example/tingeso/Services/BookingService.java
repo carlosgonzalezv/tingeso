@@ -85,8 +85,7 @@ public class BookingService {
         booking.setSpecialRequests(request.getSpecialRequests());
 
         // Cálculo financiero detallado
-        // LÍNEA NUEVA CORREGIDA:
-        int unitPrice = pack.getPrice();
+        int unitPrice = Integer.parseInt(pack.getPrice());
 
         // Aquí recibimos la "caja" con todo el desglose
         BookingCalculationResult calculation = calculateDetailedTotal(user, unitPrice, request.getPassengerCount());

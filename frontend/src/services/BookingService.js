@@ -3,7 +3,6 @@ import axios from 'axios';
 const API_URL = "http://localhost:8080/api/v1/booking";
 
 // NUEVO MÉTODO: Obtener una reserva por su ID específico
-// CORREGIDO: Mapea la ruta exacta con /summary/ que definiste en tu BookingController.java
 const getBookingById = async (token, bookingId) => {
     try {
         // Le agregamos /summary/ y volvemos a inyectar las cabeceras de autenticación

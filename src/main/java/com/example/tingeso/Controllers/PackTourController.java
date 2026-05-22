@@ -2,6 +2,7 @@ package com.example.tingeso.Controllers;
 
 
 import com.example.tingeso.Entities.PackTourEntity;
+import com.example.tingeso.Entities.UserEntity;
 import com.example.tingeso.Services.PackTourService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
