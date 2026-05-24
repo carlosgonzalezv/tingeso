@@ -3,6 +3,7 @@ package com.example.tingeso.Services;
 import com.example.tingeso.Config.BookingCalculationResult;
 import com.example.tingeso.Config.BookingRequestDTO;
 import com.example.tingeso.Config.BookingProperties;
+import com.example.tingeso.Config.BookingResponseDTO;
 import com.example.tingeso.Entities.*;
 import com.example.tingeso.Repositories.BookingRepository;
 import com.example.tingeso.Repositories.PackTourRankingProd;
@@ -43,7 +44,7 @@ public class BookingService {
         PackTourEntity pack = findAndValidatePack(request.getPackId(), request.getPassengerCount());
 
         // 2. Lógica operativa: reducir cupos
-        packTourService.reduceSlot(pack.getId(), request.getPassengerCount());
+       // packTourService.reduceSlot(pack.getId(), request.getPassengerCount());
 
         // 3. Creación de la reserva con cálculos financieros
         BookingEntity booking = createBookingBase(user, pack, request);
@@ -85,7 +86,7 @@ public class BookingService {
         booking.setSpecialRequests(request.getSpecialRequests());
 
         // Cálculo financiero detallado
-        int unitPrice = Integer.parseInt(pack.getPrice());
+        int unitPrice = pack.getPrice();
 
         // Aquí recibimos la "caja" con todo el desglose
         BookingCalculationResult calculation = calculateDetailedTotal(user, unitPrice, request.getPassengerCount());
@@ -179,10 +180,12 @@ public class BookingService {
                 .orElseThrow(() -> new RuntimeException("Error: Reserva no encontrada con el ID: " + id));
 
         String newStatus = status.toUpperCase();
+        String oldStatus = booking.getStatus() != null ? booking.getStatus().toUpperCase() : "";
 
         // REGLA 1: Toda reserva debe tener un estado válido y controlado por el sistema.
         if (!List.of("PENDIENTE", "CONFIRMADA", "COMPLETADA", "CANCELADA").contains(newStatus)) {
             throw new IllegalArgumentException("El estado '" + status + "' no está registrado en el sistema.");
+
         }
 
         // REGLA 2: Una reserva solo puede marcarse como confirmada si cumple las condiciones (Pago Completo).
@@ -191,6 +194,18 @@ public class BookingService {
             if (!hasPaid) {
                 throw new IllegalStateException("No se puede confirmar la reserva #" + id + " porque no registra pago completo.");
             }
+        }
+
+        // CONTROL AUTOMÁTICO DE INVENTARIO:
+        // Si la reserva pasa a CANCELADA y antes no lo estaba, devolvemos los cupos a la base de datos
+        if ("CANCELADA".equals(newStatus) && !"CANCELADA".equals(oldStatus)) {
+            int passengersToReturn = 1 + (booking.getCompanions() != null ? booking.getCompanions().size() : 0);
+            packTourService.addSlot(booking.getPackTour().getId(), passengersToReturn);
+        }
+        // Reversa: Si por alguna razón una reserva cancelada vuelve a activarse, restamos los cupos nuevamente
+        else if (!"CANCELADA".equals(newStatus) && "CANCELADA".equals(oldStatus)) {
+            int passengersToReduce = 1 + (booking.getCompanions() != null ? booking.getCompanions().size() : 0);
+            packTourService.reduceSlot(booking.getPackTour().getId(), passengersToReduce);
         }
 
         booking.setStatus(newStatus);
@@ -227,5 +242,30 @@ public class BookingService {
 
     public List<PackTourRankingProd> getPackageRanking(LocalDateTime start, LocalDateTime end) {
         return bookingRepository.getPackageRankingByPeriod(start, end);
+    }
+
+    public BookingResponseDTO getBookingDetailsForDisplay(Long bookingId) {
+        BookingEntity booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
+
+        // Calcular cuántos pasajeros (1 titular + acompañantes)
+        int passengerCount = 1 + (booking.getCompanions() != null ? booking.getCompanions().size() : 0);
+        int unitPrice = booking.getPackTour().getPrice();
+
+        // Re-calculamos con tu motor de reglas
+        BookingCalculationResult calc = calculateDetailedTotal(booking.getUsers(), unitPrice, passengerCount);
+
+        // Mapeamos al DTO
+        BookingResponseDTO dto = new BookingResponseDTO();
+        dto.setId(booking.getId());
+
+        // USAMOS LOS GETTERS QUE LOMBOK CREÓ PARA TI:
+        dto.setOriginalPrice(calc.getOriginalPrice()); // <--- Corregido
+        dto.setFinalPrice(calc.getFinalPrice());
+        dto.setTotalSavings(calc.getTotalSavings());
+        dto.setAppliedDiscounts(calc.getAppliedDiscounts()); // <--- Corregido
+        dto.setStatus(booking.getStatus());
+
+        return dto;
     }
 }

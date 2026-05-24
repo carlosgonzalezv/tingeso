@@ -20,7 +20,7 @@ public class PaymentsEntity {
     private Long id;
 
     private String paymentMethod; // Ejemplo: "Tarjeta de Crédito", "Débito"
-    private int amount;
+    private Integer amount;
     private LocalDateTime paymentDate;
 
     // NUEVOS CAMPOS PARA LA SIMULACIÓN

@@ -107,11 +107,13 @@ public class PackTourService {
         PackTourEntity currentPack = packTourRepository.findById(newDetails.getId())
                 .orElseThrow(() -> new RuntimeException("Paquete no encontrado"));
 
-        long activeBookingsCount = bookingRepository.countByPackTourId(newDetails.getId());
-        if (activeBookingsCount > 0) {
-            if (newDetails.getTotalSlots() < activeBookingsCount) {
+        // CORRECCIÓN: Ahora evalúa pasajeros reales ocupando cupos, no solo cantidad de reservas
+        long totalPassengersCount = bookingRepository.countTotalPassengersByPackTourId(newDetails.getId());
+
+        if (totalPassengersCount > 0) {
+            if (newDetails.getTotalSlots() < totalPassengersCount) {
                 throw new IllegalArgumentException("No puedes reducir los cupos totales a " + newDetails.getTotalSlots() +
-                        " porque ya existen " + activeBookingsCount + " reservas.");
+                        " porque ya existen " + totalPassengersCount + " cupos reales ocupados.");
             }
             if (!newDetails.getStartDate().equals(currentPack.getStartDate()) ||
                     !newDetails.getFinishDate().equals(currentPack.getFinishDate())) {

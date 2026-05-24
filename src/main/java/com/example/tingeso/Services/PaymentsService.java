@@ -19,70 +19,71 @@ public class PaymentsService {
     @Autowired
     private BookingRepository bookingRepository;
 
+    @Autowired
+    private PackTourService packTourService; // <--- INYECTAMOS EL SERVICIO DE PAQUETES
+
     public List<PaymentsEntity> getPayments() {
         return paymentsRepository.findAll();
     }
 
     /**
-     * Proceso de pago simulado con ingreso de datos de tarjeta (CVV, Expiración).
-     * No realiza validación externa, asumiendo éxito si las reglas de negocio se cumplen.
+     * Proceso de pago real.
+     * Aquí es donde confirmamos la reserva y reducimos el inventario (cupos).
      */
     @Transactional
     public PaymentsEntity processPayment(PaymentsEntity payment) {
-        // 1. ASOCIACIÓN OBLIGATORIA
-        // Nota: Asegúrate que en PaymentsEntity el objeto se llame bookingID
+        // 1. VALIDACIÓN BÁSICA
+        if (payment.getBookingID() == null || payment.getBookingID().getId() == null) {
+            throw new IllegalArgumentException("Error: El pago debe tener una reserva asociada.");
+        }
+
+        // 2. BUSQUEDA SEGURA
         BookingEntity booking = bookingRepository.findById(payment.getBookingID().getId())
-                .orElseThrow(() -> new RuntimeException("Error: No existe la reserva asociada."));
+                .orElseThrow(() -> new RuntimeException("Reserva no encontrada: " + payment.getBookingID().getId()));
 
-        // 2. REGLA DE MEDIO DE PAGO: Solo tarjeta de crédito simulada
-        if (!"Tarjeta de Crédito".equalsIgnoreCase(payment.getPaymentMethod())) {
-            throw new IllegalArgumentException("Error: Solo se permite 'Tarjeta de Crédito' simulada.");
+        // 3. VALIDACIÓN DE ESTADO
+        if ("CONFIRMADA".equalsIgnoreCase(booking.getStatus())) {
+            throw new IllegalStateException("Esta reserva ya ha sido pagada y confirmada.");
+        }
+        if ("CANCELADO".equalsIgnoreCase(booking.getStatus())) {
+            throw new IllegalStateException("No se puede pagar una reserva cancelada.");
         }
 
-        // 3. REGLA DE UNICIDAD: Solo un pago por reserva
-        // Nota: El método findByBookingID debe estar definido en tu PaymentsRepository
-        if (paymentsRepository.findByBookingID(booking.getId()).isPresent()) {
-            throw new IllegalStateException("Esta reserva ya cuenta con un pago registrado.");
-        }
-
-        // 4. VALIDACIÓN DE MONTO TOTAL Y POSITIVO
+        // 4. VALIDACIÓN DE MONTO
         if (payment.getAmount() <= 0) {
             throw new IllegalArgumentException("El monto debe ser mayor a cero.");
         }
         if (payment.getAmount() != booking.getTotalAmount()) {
-            throw new IllegalArgumentException("El monto debe ser el total de la reserva: $" + booking.getTotalAmount());
+            throw new IllegalArgumentException("El monto no coincide con el total de la reserva.");
         }
 
-        // 5. REGLA DE ESTADO: No pagar reservas canceladas o expiradas
-        if ("CANCELADO".equalsIgnoreCase(booking.getStatus()) || "EXPIRADA".equalsIgnoreCase(booking.getStatus())) {
-            throw new IllegalStateException("No se puede pagar una reserva cancelada o vencida.");
-        }
+        // 5. AQUÍ OCURRE LA MAGIA DEL INVENTARIO (Paso A)
+        // Calculamos pasajeros (1 titular + acompañantes)
+        int passengerCount = 1 + (booking.getCompanions() != null ? booking.getCompanions().size() : 0);
 
-        // 6. ACTUALIZACIÓN AUTOMÁTICA A CONFIRMADA
-        // Cumplimos con la regla de cambiar el estado tras el pago exitoso
+        // Reducimos el cupo. Si no hay cupos, este método lanzará una excepción
+        // y el pago no se guardará gracias a @Transactional
+        packTourService.reduceSlot(booking.getPackTour().getId(), passengerCount);
+
+        // 6. ACTUALIZAR ESTADO A CONFIRMADA
         booking.setStatus("CONFIRMADA");
         bookingRepository.save(booking);
 
-        // 7. PROCESAMIENTO DE DATOS SIMULADOS (Número, Expiración, CVV)
-        // Seteamos la fecha actual de la transacción
+        // 7. PROCESAMIENTO DE DATOS DEL PAGO
         payment.setPaymentDate(LocalDateTime.now());
         payment.setState("EXITOSO");
 
-        // Enmascaramiento de tarjeta (Simulación de seguridad real)
-        // Esto permite que el usuario ingrese su tarjeta pero solo guardamos los últimos 4
+        // Enmascaramiento de tarjeta (Seguridad)
         if (payment.getCardNumber() != null && payment.getCardNumber().length() > 4) {
             String fullCard = payment.getCardNumber();
             String lastFour = fullCard.substring(fullCard.length() - 4);
             payment.setCardNumber("XXXX-XXXX-XXXX-" + lastFour);
         }
 
-        // Guardamos el registro del pago (incluyendo titular y expiración si están en tu Entity)
         return paymentsRepository.save(payment);
     }
 
     public PaymentsEntity getPaymentByBooking(Long bookingID) {
-        return paymentsRepository.findByBookingID(bookingID).orElse(null);
+        return paymentsRepository.findByBookingID_Id(bookingID).orElse(null);
     }
-
-
 }

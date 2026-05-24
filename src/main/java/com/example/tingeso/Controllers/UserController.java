@@ -24,10 +24,19 @@ public class UserController {
 
     //Each time a user logs in through Keycloak, their information is correctly
     //reflected in your local PostgreSQL database.
+    // Cada vez que un usuario inicia sesión en Keycloak, su información se sincroniza.
     @PostMapping("/sync")
     public ResponseEntity<UserEntity> syncUser(@RequestBody UserEntity user) {
         return userRepository.findByEmail(user.getEmail())
-                .map(existingUser -> ResponseEntity.ok(userService.update(String.valueOf(existingUser.getId()), user)))
+                .map(existingUser -> {
+                    // Si el correo ya existe, actualizamos su ID de Keycloak
+                    // (por si borraste/recreaste el usuario en el panel de Keycloak)
+                    existingUser.setKeycloackID(user.getKeycloackID());
+                    // Puedes agregar aquí otros campos que quieras forzar a sincronizar
+                    // desde Keycloak al iniciar sesión.
+
+                    return ResponseEntity.ok(userRepository.save(existingUser));
+                })
                 .orElseGet(() -> ResponseEntity.ok(userService.saveUser(user)));
     }
 

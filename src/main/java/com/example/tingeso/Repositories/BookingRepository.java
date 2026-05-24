@@ -12,8 +12,6 @@ import java.util.List;
 @Repository
 public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
     List<BookingEntity> findByUsers_Id(Long Id);
-    List<BookingEntity> findByStatus(String status);
-    List<BookingEntity> findByPackTourId(Long packTourId);
     boolean existsByUsers_Id(Long Id);
     long countByPackTourId(Long packTourId);
     List<BookingEntity> findByStatusAndReservationBefore(String status, LocalDateTime date);
@@ -45,4 +43,13 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
         ORDER BY COUNT(b) DESC, SUM(b.totalAmount) DESC, b.packTour.name ASC
     """)
     List<PackTourRankingProd> getPackageRankingByPeriod(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    // REGLA DE INTEGRIDAD: Cuenta el total real de pasajeros (1 titular + N acompañantes) de reservas no canceladas
+
+    @Query("""
+        SELECT COUNT(b) + COALESCE(SUM(SIZE(b.companions)), 0)
+        FROM BookingEntity b
+        WHERE b.packTour.id = :packTourId
+        AND UPPER(b.status) != 'CANCELADA'
+    """)
+    long countTotalPassengersByPackTourId(@Param("packTourId") Long packTourId);
 }

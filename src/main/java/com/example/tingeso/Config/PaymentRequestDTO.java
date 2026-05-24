@@ -6,7 +6,7 @@ import lombok.Data;
 public class PaymentRequestDTO {
     private Long bookingId;
     private String paymentMethod;
-    private int amount;
+    private Integer amount;
 
     // Datos de tarjeta simulados (Requerimiento específico)
     private String cardNumber;

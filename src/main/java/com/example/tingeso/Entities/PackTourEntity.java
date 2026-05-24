@@ -25,7 +25,7 @@ public class PackTourEntity {
     private String description;
 
     @Min(value = 1, message = "el precio es mayor a 0")
-    private String price;
+    private Integer price;
 
     @Min(value = 1, message = "Los cupos totales deben ser al menos 1")
     private Integer totalSlots;

@@ -1,6 +1,7 @@
 package com.example.tingeso.Entities;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,6 +26,7 @@ public class BookingEntity {
     @Column(name = "totalamount", nullable = false)
     private int totalAmount;
 
+
     //A user can have multiple reservations
     @ManyToOne
     @JoinColumn(name = "userID", nullable = false)
@@ -36,6 +38,7 @@ public class BookingEntity {
     private PackTourEntity packTour;
 
     // En tu BookingEntity actual
+    @JsonIgnore
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
     private List<CompanionEntity> companions;
     private String specialRequests; // Para las "solicitudes especiales"

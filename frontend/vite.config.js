@@ -9,7 +9,7 @@ export default defineConfig({
     proxy: {
       // Configuramos el proxy para que /api se redirija al backend
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:8008',
         changeOrigin: true,
         secure: false,
         // ESTO ES LO QUE TENÍAMOS:

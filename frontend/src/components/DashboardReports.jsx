@@ -96,7 +96,6 @@ export default function DashboardReports() {
                 </Box>
 
                 {/* REPORT 1: SALES CHRONOLOGICAL LIST */}
-                {/* REPORT 1: SALES CHRONOLOGICAL LIST */}
                 {tabIndex === 0 && (
                     <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: '8px' }}>
                         <Table>
@@ -105,7 +104,7 @@ export default function DashboardReports() {
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Fecha Operación</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Cliente</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Paquete</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Pasajeros</TableCell> {/* <-- AGREGADO */}
+                                    <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Pasajeros</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Monto Total</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Monto Pagado</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Estado</TableCell>
@@ -117,15 +116,10 @@ export default function DashboardReports() {
                                         <TableCell>{row.reservation ? row.reservation.replace('T', ' ') : 'N/A'}</TableCell>
                                         <TableCell>{row.users?.email || "Cliente"}</TableCell>
                                         <TableCell>{row.packTour?.name || "Destino"}</TableCell>
-                                        <TableCell align="center">{row.passengersCount || 1} pas.</TableCell> {/* <-- AGREGADO (Muestra la cantidad real) */}
+                                        <TableCell align="center">{row.passengersCount || 1} pas.</TableCell>
                                         <TableCell>${row.totalAmount?.toLocaleString('es-CL')} CLP</TableCell>
                                         <TableCell>${row.totalAmount?.toLocaleString('es-CL')} CLP</TableCell>
-                                        <TableCell style={{
-                                            fontWeight: 'bold',
-                                            color: row.status === 'CONFIRMADA' || row.status === 'COMPLETADA' ? '#2e7d32' : '#f57c00'
-                                        }}>
-                                            {row.status}
-                                        </TableCell>
+                                        <TableCell style={{ fontWeight: 'bold', color: row.status === 'CONFIRMADA' || row.status === 'COMPLETADA' ? '#2e7d32' : '#f57c00' }}>{row.status}</TableCell>
                                     </TableRow>
                                 ))}
                                 {salesData.length === 0 && (
@@ -141,7 +135,6 @@ export default function DashboardReports() {
                 )}
 
                 {/* REPORT 2: PACKAGES DEMAND RANKING */}
-                {/* REPORT 2: PACKAGES DEMAND RANKING */}
                 {tabIndex === 1 && (
                     <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: '8px' }}>
                         <Table>
@@ -150,7 +143,7 @@ export default function DashboardReports() {
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Posición</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Paquete Turístico</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Cantidad de Ventas</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Total Pasajeros</TableCell> {/* <-- AGREGADO */}
+                                    <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Total Pasajeros</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 'bold' }}>Monto Total Generado</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -160,7 +153,7 @@ export default function DashboardReports() {
                                         <TableCell><strong>#{index + 1}</strong></TableCell>
                                         <TableCell style={{ fontWeight: 'bold' }}>{row.packageName}</TableCell>
                                         <TableCell>{row.totalBookings} reservas</TableCell>
-                                        <TableCell>{row.totalPassengers || 0} pasajeros</TableCell> {/* <-- AGREGADO */}
+                                        <TableCell>{row.totalPassengers || 0} pasajeros</TableCell>
                                         <TableCell sx={{ color: '#2e7d32', fontWeight: 'bold' }}>
                                             ${row.generatedAmount?.toLocaleString('es-CL')} CLP
                                         </TableCell>

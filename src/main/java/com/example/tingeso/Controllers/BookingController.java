@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import com.example.tingeso.Config.BookingResponseDTO;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -78,11 +79,31 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.getBookingsByEmail(email));
     }
 
+    // NUEVA VERSIÓN: Retorna el DTO calculado en lugar de la Entidad cruda
     @GetMapping("/summary/{bookingId}")
-    public ResponseEntity<BookingEntity> getPaymentSummary(@PathVariable Long bookingId) {
-        return bookingRepository.findById(bookingId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<?> getPaymentDetails(@PathVariable Long bookingId, @AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado.");
+        }
+
+        try {
+            // 1. Obtenemos el DTO calculado
+            BookingResponseDTO details = bookingService.getBookingDetailsForDisplay(bookingId);
+
+            // 2. Seguridad: Verificamos que el email del token coincida con el usuario de la reserva
+            // (Asumiendo que BookingEntity tiene una relación con UserEntity)
+            BookingEntity originalBooking = bookingRepository.findById(bookingId).orElseThrow();
+            String tokenEmail = jwt.getClaimAsString("email");
+
+            if (!originalBooking.getUsers().getEmail().equals(tokenEmail) && !checkIsAdminManual(jwt)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acceso denegado: No puedes ver esta reserva.");
+            }
+
+            return ResponseEntity.ok(details);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: " + e.getMessage());
+        }
     }
 
     // RULE: Management and state changes are exclusive to administrators

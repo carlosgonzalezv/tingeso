@@ -52,7 +52,7 @@ function PackCard({ pack, onManage, isAdmin }) {
         navigate(`/booking/${pack.id}`);
     };
 
-    const availableSlots = pack.availPlaces !== undefined ? pack.availPlaces : (pack.totalSlots || 0);
+    const availableSlots = pack.availableSlots !== undefined ? pack.availableSlots : (pack.totalSlots || 0);
     const isDisabled = pack.status === 'DESHABILITADO' || availableSlots <= 0;
 
     return (
