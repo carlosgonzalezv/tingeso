@@ -19,15 +19,14 @@ public class PaymentsEntity {
     @Column(unique = true, nullable = false)
     private Long id;
 
-    private String paymentMethod; // Ejemplo: "Tarjeta de Crédito", "Débito"
+    private String paymentMethod;
     private Integer amount;
     private LocalDateTime paymentDate;
 
-    // NUEVOS CAMPOS PARA LA SIMULACIÓN
-    private String cardNumber;    // Guardaremos algo como "XXXX-XXXX-XXXX-1234"
-    private String cardHolder;    // Nombre del titular ingresado
+    private String cardNumber;
+    private String cardHolder;
     private String expirationDate;
-    private String state;         // "APROBADO", "RECHAZADO"
+    private String state;
 
     @ManyToOne
     @JoinColumn(name= "bookingID", nullable = false)

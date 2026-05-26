@@ -6,7 +6,7 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.0.5</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/>
 	</parent>
 	<groupId>com.example</groupId>
 	<artifactId>tingeso</artifactId>
@@ -76,7 +76,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>payroll-backend</finalName>
+		<finalName>travel-agency</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

@@ -7,5 +7,4 @@ const keycloakConfig = {
 };
 
 const keycloak = new Keycloak(keycloakConfig);
-//window.keycloak = keycloak;
 export default keycloak;

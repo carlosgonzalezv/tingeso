@@ -23,25 +23,23 @@ public class BookingController {
 
     @Autowired
     private BookingService bookingService;
-
     @Autowired
     private BookingRepository bookingRepository;
 
-    // RULE: An administrator can query all bookings.
+    //Returns the complete list of all existing reservations.
     @GetMapping("/")
     public ResponseEntity<?> listAll(@AuthenticationPrincipal Jwt jwt) {
         if (jwt == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado.");
         }
-
         // If not admin, block access to the entire list
         if (!checkIsAdminManual(jwt)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acceso denegado: Se requieren permisos de administrador.");
         }
-
         return ResponseEntity.ok(bookingService.getAllBookings());
     }
 
+    //Create a new reservation from the submitted data
     @PostMapping("/create")
     public ResponseEntity<?> createFromWeb(@RequestBody BookingRequestDTO request) {
         try {
@@ -54,75 +52,60 @@ public class BookingController {
         }
     }
 
+    //Returns a list of reservations associated with a specific user ID.
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<BookingEntity>> getByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(bookingService.getBookingsByUserId(userId));
     }
 
-    // RULE: A client can only view their own bookings.
+    //Returns a user's reservations based on their email address.
+    //Validates that the email belongs to the logged-in user or that the queryer is an admin.
     @GetMapping("/my-bookings/{email}")
     public ResponseEntity<?> getByEmail(@PathVariable String email, @AuthenticationPrincipal Jwt jwt) {
         if (jwt == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado.");
         }
-
-        // Extract real email from Keycloak token claims
         String tokenEmail = jwt.getClaimAsString("email");
         boolean isAdmin = checkIsAdminManual(jwt);
-
-        // If path email does NOT match token email, and is not ADMIN, block access (403)
         if (!email.equals(tokenEmail) && !isAdmin) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body("Acceso denegado: No puedes consultar reservas de otro usuario.");
         }
-
         return ResponseEntity.ok(bookingService.getBookingsByEmail(email));
     }
 
-    // NUEVA VERSIÓN: Retorna el DTO calculado en lugar de la Entidad cruda
+    //Get the payment details for a specific booking.
     @GetMapping("/summary/{bookingId}")
     public ResponseEntity<?> getPaymentDetails(@PathVariable Long bookingId, @AuthenticationPrincipal Jwt jwt) {
         if (jwt == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado.");
         }
-
         try {
-            // 1. Obtenemos el DTO calculado
             BookingResponseDTO details = bookingService.getBookingDetailsForDisplay(bookingId);
-
-            // 2. Seguridad: Verificamos que el email del token coincida con el usuario de la reserva
-            // (Asumiendo que BookingEntity tiene una relación con UserEntity)
             BookingEntity originalBooking = bookingRepository.findById(bookingId).orElseThrow();
             String tokenEmail = jwt.getClaimAsString("email");
-
             if (!originalBooking.getUsers().getEmail().equals(tokenEmail) && !checkIsAdminManual(jwt)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acceso denegado: No puedes ver esta reserva.");
             }
-
             return ResponseEntity.ok(details);
-
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: " + e.getMessage());
         }
     }
 
-    // RULE: Management and state changes are exclusive to administrators
+    //Change the status of a reservation
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestParam String newStatus, @AuthenticationPrincipal Jwt jwt) {
         if (jwt == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado.");
         }
-
-        // Manual security block so only ADMIN can execute this PUT
         if (!checkIsAdminManual(jwt)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acceso denegado: Solo la agencia puede cambiar estados.");
         }
-
         try {
             if (!List.of("PENDIENTE", "CONFIRMADA", "CANCELADA", "COMPLETADA").contains(newStatus.toUpperCase())) {
                 return ResponseEntity.badRequest().body("Estado de reserva no válido.");
             }
-
             BookingEntity updatedBooking = bookingService.updateBookingStatus(id, newStatus.toUpperCase());
             return ResponseEntity.ok(updatedBooking);
         } catch (Exception e) {
@@ -130,11 +113,8 @@ public class BookingController {
         }
     }
 
-    /**
-     * Manual role validator reading Keycloak claims directly
-     */
+    //Extract the realm_access claims or roles from the JWT token.
     private boolean checkIsAdminManual(Jwt jwt) {
-        // Look into Keycloak structure (realm_access -> roles)
         Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
         if (realmAccess != null && realmAccess.containsKey("roles")) {
             List<?> roles = (List<?>) realmAccess.get("roles");
@@ -142,39 +122,28 @@ public class BookingController {
                 return true;
             }
         }
-
-        // Alternative if flat in main claims
         List<String> directRoles = jwt.getClaimAsStringList("roles");
         return directRoles != null && directRoles.contains("ADMIN");
     }
 
-    // AGENCY VISIBILITY: Get consolidated statistics for business dashboards
+    //Calculate quick metrics such as total bookings, number of bookings per state, and total cumulative revenue.
     @GetMapping("/dashboard/stats")
     public ResponseEntity<?> getDashboardStats(@AuthenticationPrincipal Jwt jwt) {
         if (jwt == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado.");
         }
-
-        // Security: Only admin accesses financial metrics
         if (!checkIsAdminManual(jwt)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acceso denegado: Requiere rol de Administrador.");
         }
-
         List<BookingEntity> allBookings = bookingService.getAllBookings();
-
-        // 1. Basic operational calculations
         long totalReservas = allBookings.size();
         long confirmadas = allBookings.stream().filter(b -> "CONFIRMADA".equalsIgnoreCase(b.getStatus())).count();
         long canceladas = allBookings.stream().filter(b -> "CANCELADA".equalsIgnoreCase(b.getStatus())).count();
         long completadas = allBookings.stream().filter(b -> "COMPLETADA".equalsIgnoreCase(b.getStatus())).count();
-
-        // 2. Transform financial data: Total revenue (Sum of CONFIRMADA and COMPLETADA)
         int totalIngresos = allBookings.stream()
                 .filter(b -> "CONFIRMADA".equalsIgnoreCase(b.getStatus()) || "COMPLETADA".equalsIgnoreCase(b.getStatus()))
                 .mapToInt(BookingEntity::getTotalAmount)
                 .sum();
-
-        // 3. Build structured map useful for business analytics
         Map<String, Object> stats = Map.of(
                 "totalBookings", totalReservas,
                 "confirmedBookings", confirmadas,
@@ -186,47 +155,37 @@ public class BookingController {
         return ResponseEntity.ok(stats);
     }
 
-    // REPORTS: Get detailed chronological sales report by period
+    // It receives a date range and returns the detailed sales report for that period.
     @GetMapping("/reports/sales")
     public ResponseEntity<?> getSalesByPeriod(
             @RequestParam String start,
             @RequestParam String end,
             @AuthenticationPrincipal Jwt jwt) {
-
         if (jwt == null || !checkIsAdminManual(jwt)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acceso denegado.");
         }
-
         LocalDateTime startDate = LocalDateTime.parse(start);
         LocalDateTime endDate = LocalDateTime.parse(end);
-
-        // RULE VALIDATION: Start date cannot be after end date
         if (startDate.isAfter(endDate)) {
             return ResponseEntity.badRequest().body("Error: La fecha de inicio no puede ser posterior a la fecha de término.");
         }
-
         return ResponseEntity.ok(bookingService.getSalesByPeriod(startDate, endDate));
     }
 
-    // REPORTS: Get package demand ranking by period
+    // Analyze which tour packages have had the highest demand between two given dates.
     @GetMapping("/reports/ranking")
     public ResponseEntity<?> getRankingByPeriod(
             @RequestParam String start,
             @RequestParam String end,
             @AuthenticationPrincipal Jwt jwt) {
-
         if (jwt == null || !checkIsAdminManual(jwt)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acceso denegado.");
         }
-
         LocalDateTime startDate = LocalDateTime.parse(start);
         LocalDateTime endDate = LocalDateTime.parse(end);
-
-        // RULE VALIDATION: Start date cannot be after end date
         if (startDate.isAfter(endDate)) {
             return ResponseEntity.badRequest().body("Error: La fecha de inicio no puede ser posterior a la fecha de término.");
         }
-
         return ResponseEntity.ok(bookingService.getPackageRanking(startDate, endDate));
     }
 }

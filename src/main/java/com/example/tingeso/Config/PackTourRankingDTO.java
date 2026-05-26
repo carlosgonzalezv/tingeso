@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PackTourRankingDTO {
     private String packageName;
-    private long totalBookings;      // totalReservas -> totalBookings
-    private long totalPassengers;    // totalPasajeros -> totalPassengers
-    private long generatedAmount;    // montoGenerado -> generatedAmount
+    private long totalBookings;
+    private long totalPassengers;
+    private long generatedAmount;
 }

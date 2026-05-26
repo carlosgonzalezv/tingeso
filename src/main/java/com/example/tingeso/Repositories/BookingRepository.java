@@ -17,11 +17,8 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
     List<BookingEntity> findByStatusAndReservationBefore(String status, LocalDateTime date);
     long countByUsers_EmailAndStatus(String email, String status);
     boolean existsByUsers_EmailAndStatusAndReservationAfter(String email, String status, LocalDateTime date);
-
-    // CORREGIDO: Navega desde el objeto 'users' hasta su propiedad 'email'
     List<BookingEntity> findByUsers_Email(String email);
 
-    // REPORTE 1: Listado de ventas por período EXCLUYENDO las canceladas
     @Query("""
         SELECT b FROM BookingEntity b
         WHERE b.reservation BETWEEN :start AND :end
@@ -30,7 +27,6 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
     """)
     List<BookingEntity> findByReservationBetweenOrderByReservationDesc(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
-    // REPORTE 2: Ranking de demanda sumando Titular + Acompañantes y resolviendo empates
     @Query("""
         SELECT b.packTour.name AS packageName,
                COUNT(b) AS totalBookings,
@@ -43,7 +39,6 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
         ORDER BY COUNT(b) DESC, SUM(b.totalAmount) DESC, b.packTour.name ASC
     """)
     List<PackTourRankingProd> getPackageRankingByPeriod(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
-    // REGLA DE INTEGRIDAD: Cuenta el total real de pasajeros (1 titular + N acompañantes) de reservas no canceladas
 
     @Query("""
         SELECT COUNT(b) + COALESCE(SUM(SIZE(b.companions)), 0)

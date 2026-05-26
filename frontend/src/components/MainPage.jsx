@@ -10,14 +10,11 @@ import PackCard from './PackCard';
 import SearchBar from './SearchBar';
 import { PackService } from '../services/ServicePack.js';
 
+//the program's home and main page
 const MainPage = () => {
     const navigate = useNavigate();
     const { keycloak, initialized } = useKeycloak();
-
-    // Estados de datos
     const [packages, setPackages] = useState([]);
-
-    // Agrupamos los filtros en un solo objeto para limpiar el código
     const [filters, setFilters] = useState({
         searchTerm: '',
         minPrice: '',
@@ -25,21 +22,13 @@ const MainPage = () => {
         startDate: '',
         endDate: ''
     });
-
-    // Estados del Modal de Edición
     const [open, setOpen] = useState(false);
     const [editData, setEditData] = useState({});
-
     const roles = keycloak.tokenParsed?.resource_access?.["sisgr-frontend"]?.roles || [];
     const isAdmin = roles.includes("ADMIN");
 
-    // Función para cargar datos (usando el Service)
-    // Busca esta parte en tu archivo MainPage.jsx
-    // FUNCIÓN CORREGIDA: Carga datos con o sin token de sesión
     const loadData = useCallback(async () => {
         try {
-            // Pasamos el token si existe; si no, irá como undefined o null
-            // Tu PackService debe estar preparado para no enviarlo en los headers si no existe
             const data = await PackService.getPackages(keycloak.token);
             setPackages(data || []);
         } catch (error) {
@@ -53,16 +42,10 @@ const MainPage = () => {
         }
     }, [initialized, loadData]);
 
-    /**
-     * Lógica de Filtrado:
-     * Usamos useMemo para que el filtrado solo se ejecute cuando
-     * cambien los paquetes, los filtros o el rol de admin.
-     */
     const filteredPackages = useMemo(() => {
         return PackService.filterPackages(packages, filters, isAdmin);
     }, [packages, filters, isAdmin]);
 
-    // Manejadores de eventos
     const handleOpenEdit = (pack) => {
         setEditData({ ...pack });
         setOpen(true);
@@ -81,17 +64,16 @@ const MainPage = () => {
             await PackService.savePackage(editData, keycloak.token);
             alert("Paquete actualizado correctamente");
             handleClose();
-            await loadData(); // Recarga limpia desde el service
+            await loadData();
         } catch (error) {
             alert("Error: " + error);
         }
     };
 
-    // Funciones para actualizar filtros individuales desde SearchBar
+    // Functions to update individual filters from SearchBar
     const updateFilter = (name, value) => {
         setFilters(prev => ({ ...prev, [name]: value }));
     };
-
     if (!initialized) return <Typography sx={{ p: 5 }}>Iniciando sesión...</Typography>;
 
     return (
@@ -111,7 +93,6 @@ const MainPage = () => {
                         </Button>
                     )}
                 </Box>
-
                 <SearchBar
                     searchTerm={filters.searchTerm}
                     setSearchTerm={(val) => updateFilter('searchTerm', val)}
@@ -124,7 +105,6 @@ const MainPage = () => {
                     endDate={filters.endDate}
                     setEndDate={(val) => updateFilter('endDate', val)}
                 />
-
                 <Grid container spacing={3}>
                     {filteredPackages.length > 0 ? (
                         filteredPackages.map((pack) => (
@@ -144,8 +124,7 @@ const MainPage = () => {
                         </Box>
                     )}
                 </Grid>
-
-                {/* Modal de Gestión */}
+                {/* Management Modal*/}
                 <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xs">
                     <DialogTitle sx={{ fontWeight: 'bold' }}>Gestionar Paquete</DialogTitle>
                     <DialogContent dividers>
@@ -153,11 +132,9 @@ const MainPage = () => {
                             <TextField fullWidth label="Nombre" name="name" value={editData.name || ''} onChange={handleEditChange} />
                             <TextField fullWidth label="Precio" name="price" type="number" value={editData.price || ''} onChange={handleEditChange} />
                             <TextField fullWidth label="Cupos Totales" name="totalSlots" type="number" value={editData.totalSlots || ''} onChange={handleEditChange} />
-
                             <Typography variant="caption" color="text.secondary">
                                 Cupos disponibles actuales: {editData.availableSlots || 0}
                             </Typography>
-
                             <TextField select fullWidth label="Estado" name="status" value={editData.status || ''} onChange={handleEditChange}>
                                 <MenuItem value="DISPONIBLE">DISPONIBLE</MenuItem>
                                 <MenuItem value="DESHABILITADO">DESHABILITADO</MenuItem>

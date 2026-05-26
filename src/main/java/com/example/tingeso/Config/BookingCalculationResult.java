@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor // Añade esta anotación
+@NoArgsConstructor
 public class BookingCalculationResult {
     private int originalPrice;
     private int finalPrice;

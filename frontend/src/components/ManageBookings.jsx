@@ -3,6 +3,7 @@ import { useKeycloak } from '@react-keycloak/web';
 import { Container, Paper, Typography, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Select, MenuItem, Button, CircularProgress, Alert } from '@mui/material';
 import BookingService from '../services/BookingService';
 
+//interface that connects the administrator to the reservation's database.
 export default function ManageBookings() {
     const { keycloak, initialized } = useKeycloak();
     const [bookings, setBookings] = useState([]);
@@ -16,8 +17,8 @@ export default function ManageBookings() {
                     const rawList = Array.isArray(data) ? data : [];
                     const safeData = rawList.map((booking) => ({
                         id: booking?.id ? String(booking.id) : '',
-                        packageName: booking?.touristPackage?.name || booking?.packageName || "Sin nombre",
-                        userName: booking?.user?.name || booking?.userEmail || "Usuario Desconocido",
+                        packageName: booking?.packTour?.name || booking?.packageName || "Sin nombre",
+                        userName: booking?.users?.name || booking?.userEmail || "Usuario Desconocido",
                         totalAmount: Number(booking?.totalAmount || booking?.totalamount || 0),
                         passengerCount: Number(booking?.passengerCount || 1),
                         status: booking?.status ? String(booking.status).toUpperCase() : "PENDIENTE"
@@ -41,7 +42,7 @@ export default function ManageBookings() {
         BookingService.updateBookingStatus(keycloak.token, bookingId, newStatus)
             .then(() => {
                 alert("Estado actualizado correctamente");
-                fetchAllBookings(); // Recargamos para ver el cambio
+                fetchAllBookings();
             })
             .catch((err) => {
                 console.error(err);

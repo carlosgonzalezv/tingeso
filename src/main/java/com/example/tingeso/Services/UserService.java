@@ -46,7 +46,7 @@ public class UserService {
             user.setStatement("INACTIVO");
             userRepository.save(user);
         } else {
-            userRepository.delete(user);//ACUERDATE DE CONECTAR ESTO AL HACER EL SISTEMA
+            userRepository.delete(user);
         }
     }
 

@@ -18,13 +18,14 @@ public class PackTourService {
     @Autowired
     private BookingRepository bookingRepository;
 
+    //Returns a list of all packages, but with a filter: it excludes all those marked as "INACTIVO"
     public List<PackTourEntity> getTourPack() {
         return packTourRepository.findAll().stream()
                 .filter(p -> !"INACTIVO".equals(p.getStatus()))
                 .collect(Collectors.toList());
     }
 
-    //revisa si el pack cumple con multiples condiciones
+    //Check if the pack meets multiple conditions
     private void preparePack (PackTourEntity packTour){
         if (packTour.getStartDate() == null || packTour.getFinishDate()==null){
             throw new IllegalArgumentException("la fecha de inicio y termino son obligatorias");
@@ -36,7 +37,6 @@ public class PackTourService {
             packTour.setStatus("NO VIGENTE");
             return;
         }
-
         if ("CANCELADO".equals(packTour.getStatus())) {
             packTour.setAvailableSlots(0);
             return;
@@ -55,14 +55,15 @@ public class PackTourService {
         }
     }
 
-    //de momento esta revisando que al hacer el paquete las fechas no se pongan mal
+    //Save the package to the database, but not before validating twice:
+    //First, that the changes are legal (validateCriticalChanges) and then that the state is correct (preparePack).
     public PackTourEntity saveTourPack (PackTourEntity packTour) {
         validateCriticalChanges(packTour);
         preparePack(packTour);
         return packTourRepository.save(packTour);
     }
 
-    //funcion que reduce el slot de los paquetes con cada compra
+    //The number of available slots decreases when someone makes a purchase.
     public void reduceSlot(Long Id, int quantity){
         PackTourEntity packTour=packTourRepository.findById(Id).orElseThrow();
         int newSlot=packTour.getAvailableSlots()-quantity;
@@ -76,40 +77,33 @@ public class PackTourService {
         packTourRepository.save(packTour);
     }
 
+    //Returns slots to inventory. Primarily used when a reservation is canceled or expires.
     public void addSlot(Long id, int quantity) {
         PackTourEntity pack = packTourRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Paquete no encontrado"));
-
         pack.setAvailableSlots(pack.getAvailableSlots() + quantity);
-
-        // Si el paquete vuelve a tener cupos, actualizamos su estado
         if (pack.getAvailableSlots() > 0 && "AGOTADO".equals(pack.getStatus())) {
             pack.setStatus("DISPONIBLE");
         }
-
         packTourRepository.save(pack);
     }
 
-    //borra el paquete aunque en verdad solo lo deja inactivo para que no vuelva a aparecer
+    //Perform a "logical delete". Instead of deleting the record from the database,
+    //simply change its status to "INACTIVE" and reset the quotas to zero.
     public void deletePackTour(Long id) {
         PackTourEntity pack = packTourRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Paquete no encontrado"));
-
-        pack.setStatus("INACTIVO");//o dejalo como INACTIVO
+        pack.setStatus("INACTIVO");
         pack.setAvailableSlots(0);
-
         packTourRepository.save(pack);
     }
 
-    //hace que cuando haya reservas en un paquetes, no se puedan cambiar los datos
+    //This means that when there are reservations in a package, the details cannot be changed.
     private void validateCriticalChanges(PackTourEntity newDetails) {
         if (newDetails.getId() == null) return;
         PackTourEntity currentPack = packTourRepository.findById(newDetails.getId())
                 .orElseThrow(() -> new RuntimeException("Paquete no encontrado"));
-
-        // CORRECCIÓN: Ahora evalúa pasajeros reales ocupando cupos, no solo cantidad de reservas
         long totalPassengersCount = bookingRepository.countTotalPassengersByPackTourId(newDetails.getId());
-
         if (totalPassengersCount > 0) {
             if (newDetails.getTotalSlots() < totalPassengersCount) {
                 throw new IllegalArgumentException("No puedes reducir los cupos totales a " + newDetails.getTotalSlots() +
@@ -121,5 +115,4 @@ public class PackTourService {
             }
         }
     }
-
 }

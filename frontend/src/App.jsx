@@ -44,8 +44,6 @@ function App() {
 
                         <Route path="/booking/:id" element={<PrivateRoute><BookingPage /></PrivateRoute>} />
                         <Route path="/pago/:bookingId" element={<PrivateRoute><PaymentPage /></PrivateRoute>} />
-
-                        {/* RUTA DE REPORTES SINCRONIZADA */}
                         <Route
                             path="/reports"
                             element={

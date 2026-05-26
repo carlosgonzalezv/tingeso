@@ -9,7 +9,6 @@ const SearchBar = ({
                        endDate, setEndDate
                    }) => {
 
-    // Validación para no permitir números negativos
     const handlePriceChange = (setter) => (e) => {
         const value = e.target.value;
         if (value === '' || Number(value) >= 0) setter(value);
@@ -26,7 +25,6 @@ const SearchBar = ({
             gap: 2,
             flexWrap: 'wrap'
         }}>
-            {/* Buscador de texto principal */}
             <TextField
                 sx={{ flexGrow: 2, minWidth: '200px' }}
                 placeholder="¿A dónde quieres ir?"
@@ -37,7 +35,6 @@ const SearchBar = ({
                 }}
             />
 
-            {/* Rango de Precios */}
             <TextField
                 label="Precio Mín"
                 type="number"
@@ -55,7 +52,6 @@ const SearchBar = ({
                 inputProps={{ min: 0 }}
             />
 
-            {/* Rango de Fechas */}
             <TextField
                 label="Desde"
                 type="date"

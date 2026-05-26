@@ -3,12 +3,12 @@ import { useKeycloak } from '@react-keycloak/web';
 import { Container, Paper, Typography, TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Grid, Tabs, Tab, Box, Alert } from '@mui/material';
 import BookingService from '../services/BookingService';
 
+//The page where the admin can create and review reports
 export default function DashboardReports() {
     const { keycloak } = useKeycloak();
     const [tabIndex, setTabIndex] = useState(0);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
-
     const [salesData, setSalesData] = useState([]);
     const [rankingData, setRankingData] = useState([]);
     const [error, setError] = useState(null);
@@ -18,15 +18,11 @@ export default function DashboardReports() {
             alert("Por favor selecciona ambas fechas.");
             return;
         }
-
-        // RULE VALIDATION: Start date cannot be after end date
         if (new Date(startDate) > new Date(endDate)) {
             setError("La fecha de inicio no puede ser posterior a la fecha de término.");
             return;
         }
-
         setError(null);
-        // ISO format conversion required for LocalDateTime.parse() in Spring Boot
         const startISO = `${startDate}T00:00:00`;
         const endISO = `${endDate}T23:59:59`;
 
@@ -56,10 +52,7 @@ export default function DashboardReports() {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                     Filtre y procese datos operacionales para apoyar la toma de decisiones estratégicas de la agencia.
                 </Typography>
-
                 {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
-
-                {/* Date range filters */}
                 <Grid container spacing={3} sx={{ my: 1 }} alignItems="center">
                     <Grid item xs={12} sm={4}>
                         <TextField

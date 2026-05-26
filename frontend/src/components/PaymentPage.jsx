@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Box, Typography, TextField, Button, Paper, Divider, Alert, CircularProgress } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'; // Asegúrate de tener instalado @mui/icons-material
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useKeycloak } from "@react-keycloak/web";
 import bookingService from "../services/BookingService";
 import paymentService from "../services/PaymentService";
@@ -10,7 +10,6 @@ const PaymentPage = () => {
     const { bookingId } = useParams();
     const navigate = useNavigate();
     const { keycloak, initialized } = useKeycloak();
-
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
@@ -40,15 +39,26 @@ const PaymentPage = () => {
     }, [bookingId, initialized, keycloak.token]);
 
     const handleInputChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        if (name === 'cardNumber') {
+            const onlyNumbers = value.replace(/\D/g, '');
+            if (onlyNumbers.length <= 16) {
+                setFormData({ ...formData, [name]: onlyNumbers });
+            }
+        } else {
+            setFormData({ ...formData, [name]: value });
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (formData.cardNumber.length !== 16) {
+            setError("El número de tarjeta debe tener exactamente 16 dígitos.");
+            return;
+        }
         setProcessing(true);
         setError(null);
 
-        // Enviamos el precio final calculado
         const paymentPayload = {
             bookingId: parseInt(bookingId),
             amount: booking.finalPrice || booking.totalAmount,
@@ -81,26 +91,18 @@ const PaymentPage = () => {
     return (
         <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}>
             <Paper elevation={3} sx={{ p: 4, maxWidth: 600, width: '100%' }}>
-
-                {/* Botón de Volver */}
                 <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ mb: 2 }}>
                     Volver
                 </Button>
-
                 <Typography variant="h4" gutterBottom color="primary">Procesar Pago</Typography>
-
-                {/* Resumen de Reserva detallado */}
                 <Box sx={{ bgcolor: '#f9f9f9', p: 2, mb: 3, borderRadius: 1, border: '1px solid #ddd' }}>
                     <Typography variant="h6" gutterBottom>Resumen de Reserva</Typography>
-
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                         <Typography>Precio Original:</Typography>
                         <Typography sx={{ textDecoration: 'line-through', color: 'gray' }}>
                             ${booking.originalPrice || booking.totalAmount}
                         </Typography>
                     </Box>
-
-                    {/* Mostrar Descuentos si existen */}
                     {booking.appliedDiscounts && booking.appliedDiscounts.length > 0 && (
                         <Box sx={{ my: 1, p: 1, bgcolor: '#e8f5e9', borderRadius: 1 }}>
                             <Typography variant="body2" color="success.main" sx={{ fontWeight: 'bold' }}>
@@ -114,9 +116,7 @@ const PaymentPage = () => {
                             </Typography>
                         </Box>
                     )}
-
                     <Divider sx={{ my: 2 }} />
-
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant="h6">Total a Pagar:</Typography>
                         <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
@@ -129,11 +129,42 @@ const PaymentPage = () => {
 
                 <form onSubmit={handleSubmit}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <TextField label="Nombre del Titular" name="cardHolder" required value={formData.cardHolder} onChange={handleInputChange} />
-                        <TextField label="Número de Tarjeta" name="cardNumber" required placeholder="XXXX XXXX XXXX XXXX" value={formData.cardNumber} onChange={handleInputChange} />
+                        <TextField
+                            label="Nombre del Titular"
+                            name="cardHolder"
+                            required
+                            value={formData.cardHolder}
+                            onChange={handleInputChange}
+                        />
+                        <TextField
+                            label="Número de Tarjeta"
+                            name="cardNumber"
+                            required
+                            placeholder="1234567812345678"
+                            value={formData.cardNumber}
+                            onChange={handleInputChange}
+                            inputProps={{ maxLength: 16, pattern: "\\d{16}" }}
+                            helperText="Ingresa los 16 dígitos de tu tarjeta"
+                        />
                         <Box sx={{ display: 'flex', gap: 2 }}>
-                            <TextField label="Fecha Expiración" name="expirationDate" required placeholder="MM/YY" value={formData.expirationDate} onChange={handleInputChange} />
-                            <TextField label="CVV" name="cvv" type="password" required placeholder="123" value={formData.cvv} onChange={handleInputChange} />
+                            <TextField
+                                label="Fecha Expiración"
+                                name="expirationDate"
+                                required
+                                placeholder="MM/YY"
+                                value={formData.expirationDate}
+                                onChange={handleInputChange}
+                            />
+                            <TextField
+                                label="CVV"
+                                name="cvv"
+                                type="password"
+                                required
+                                placeholder="123"
+                                value={formData.cvv}
+                                onChange={handleInputChange}
+                                inputProps={{ maxLength: 3 }}
+                            />
                         </Box>
                         <Button type="submit" variant="contained" color="primary" size="large" disabled={processing} sx={{ mt: 2 }}>
                             {processing ? "Procesando..." : `Pagar $${booking.finalPrice || booking.totalAmount}`}

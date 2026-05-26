@@ -6,6 +6,7 @@ const style = {
     width: 400, bgcolor: 'background.paper', borderRadius: '8px', boxShadow: 24, p: 4,
 };
 
+//The page where the number of passengers and their special requests are added
 export default function BookingModal({ open, onClose, onConfirm, packName, maxSlots }) {
     const [count, setCount] = useState(1);
     const [requests, setRequests] = useState("");

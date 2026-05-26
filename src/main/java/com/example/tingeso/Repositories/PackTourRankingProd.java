@@ -4,5 +4,5 @@ public interface PackTourRankingProd {
     String getPackageName();
     Long getTotalBookings();
     Long getGeneratedAmount();
-    Long getTotalPassengers(); // <-- AGREGADO
+    Long getTotalPassengers();
 }

@@ -14,7 +14,7 @@ public class CompanionEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String fullName;
-    private String rut; // O DNI según necesites
+    private String rut;
 
     @ManyToOne
     @JoinColumn(name = "booking_id")

@@ -4,10 +4,10 @@ import { useKeycloak } from '@react-keycloak/web';
 import { Container, Paper, Typography, Box, Chip, Button, Stack, Divider, CircularProgress, Alert } from '@mui/material';
 import BookingService from '../services/BookingService';
 
+//page where you can see all your bookings that you have made.
 export default function MyBookings() {
     const { keycloak, initialized } = useKeycloak();
     const navigate = useNavigate();
-
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -19,7 +19,6 @@ export default function MyBookings() {
             BookingService.getBookingsByEmail(keycloak.token, keycloak.tokenParsed?.email || "")
                 .then((data) => {
                     const rawList = Array.isArray(data) ? data : [];
-
                     const safeData = rawList.map((booking) => {
                         return {
                             id: booking?.id ? String(booking.id) : '',
@@ -32,7 +31,6 @@ export default function MyBookings() {
                             status: booking?.status ? String(booking.status).toUpperCase() : "PENDIENTE"
                         };
                     });
-
                     setBookings(safeData);
                     setLoading(false);
                 })
@@ -102,9 +100,7 @@ export default function MyBookings() {
                                 </Box>
                                 {getStatusChip(item.status)}
                             </Box>
-
                             <Divider sx={{ my: 1.5 }} />
-
                             {/* Booking Details */}
                             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, my: 2 }}>
                                 <Typography variant="body2">
@@ -124,15 +120,12 @@ export default function MyBookings() {
                                     </Typography>
                                 )}
                             </Box>
-
                             <Divider sx={{ my: 1.5 }} />
-
                             {/* Terms & Actions */}
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 1, flexWrap: 'wrap', gap: 1 }}>
                                 <Typography variant="caption" color="text.secondary" sx={{ maxWidth: '70%' }}>
                                     * Condiciones: Para cambios o cancelaciones, póngase en contacto con la administración antes de la fecha programada.
                                 </Typography>
-
                                 {item.status === 'PENDIENTE' && (
                                     <Button
                                         variant="contained"

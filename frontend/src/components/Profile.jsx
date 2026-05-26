@@ -5,25 +5,21 @@ import { Container, Paper, Typography, TextField, Button, Box, Grid, Alert } fro
 import { useNavigate } from 'react-router-dom';
 import { updateUserInfo, getUserInfo } from '../services/UserService';
 
+
 const Profile = () => {
     const { keycloak, initialized } = useKeycloak();
     const navigate = useNavigate();
-
     const [edit, setEdit] = useState(false);
     const [success, setSuccess] = useState(false);
     const [formData, setFormData] = useState({
         name: '', idDocument: '', cellphone: '', nationality: ''
     });
 
-    // 1. fetchUserData con manejo correcto de Axios y dependencias
     const fetchUserData = useCallback(async () => {
-        // Obtenemos el email dentro de la función para evitar el error "email is not defined"
         const userEmail = keycloak?.tokenParsed?.email;
-
         if (initialized && keycloak?.authenticated && userEmail) {
             try {
                 const response = await getUserInfo(keycloak, userEmail);
-                // Axios devuelve los datos en la propiedad .data
                 if (response && response.data) {
                     const data = response.data;
                     setFormData({
@@ -39,7 +35,6 @@ const Profile = () => {
         }
     }, [initialized, keycloak]);
 
-    // 2. useEffect corregido para no causar "cascading renders"
     useEffect(() => {
         if (initialized) {
             void fetchUserData();
@@ -51,7 +46,6 @@ const Profile = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // 3. handleSave con acceso seguro a response.data
     const handleSave = async () => {
         try {
             const response = await updateUserInfo(keycloak, formData);
@@ -110,7 +104,6 @@ const Profile = () => {
                         />
                     </Grid>
                 </Grid>
-
                 <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
                     {edit ? (
                         <>

@@ -5,6 +5,7 @@ import BookingService from '../services/BookingService';
 import BookingModal from './BookingModal';
 import {useNavigate} from "react-router-dom";
 
+//the cards from the tour packages
 function PackCard({ pack, onManage, isAdmin }) {
     const [expanded, setExpanded] = useState(false);
     const [modalOpen, setModalOpen] = useState(false); // <--- Estado para el modal
@@ -17,30 +18,23 @@ function PackCard({ pack, onManage, isAdmin }) {
         return `${day}/${month}/${year}`;
     };
 
-    // Esta función se activa cuando el usuario confirma en el Modal
     const handleConfirmBooking = async (bookingDetails) => {
         try {
-            // Creamos el DTO tal como lo espera el Backend
             const payload = {
                 packId: pack.id,
                 userEmail: keycloak.tokenParsed.email,
                 passengerCount: bookingDetails.passengerCount,
                 specialRequests: bookingDetails.specialRequests
-                // Si agregaste companionNames al DTO, lo incluyes aquí también
             };
-
             await BookingService.createBooking(keycloak.token, payload);
-
             alert(`¡Reserva exitosa para ${pack.name}!`);
             window.location.reload();
-
         } catch (error) {
             const errorMsg = error.response?.data || "No se pudo realizar la reserva";
             alert("Error: " + errorMsg);
         }
     };
 
-    // Función que maneja el clic en el botón principal
     const navigate = useNavigate();
 
     const handleButtonClick = () => {
@@ -48,7 +42,6 @@ function PackCard({ pack, onManage, isAdmin }) {
             keycloak.login();
             return;
         }
-        // Redirigimos a la nueva página pasando el ID del paquete
         navigate(`/booking/${pack.id}`);
     };
 
@@ -77,11 +70,9 @@ function PackCard({ pack, onManage, isAdmin }) {
                     <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#FB8C00', mb: 0.5 }}>
                         {pack.name}
                     </Typography>
-
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                         {formatDate(pack.startDate)} al {formatDate(pack.finishDate)}
                     </Typography>
-
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#2e7d32' }}>
                             ${Number(pack.price).toLocaleString('es-CL')}
@@ -93,13 +84,11 @@ function PackCard({ pack, onManage, isAdmin }) {
                             sx={{ fontSize: '0.7rem', height: '20px' }}
                         />
                     </Box>
-
                     <Collapse in={expanded} timeout="auto">
                         <Box sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid #eee' }}>
                             <Typography variant="caption" sx={{ display: 'block', mb: 1.5, color: 'text.secondary' }}>
                                 {pack.description || "Sin descripción"}
                             </Typography>
-
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                 <Button
                                     variant="contained"
@@ -110,7 +99,6 @@ function PackCard({ pack, onManage, isAdmin }) {
                                 >
                                     {keycloak.authenticated ? 'RESERVAR' : 'LOGIN PARA RESERVAR'}
                                 </Button>
-
                                 {isAdmin && (
                                     <Button
                                         variant="outlined"
@@ -126,8 +114,6 @@ function PackCard({ pack, onManage, isAdmin }) {
                     </Collapse>
                 </CardContent>
             </Card>
-
-            {/* Modal que creamos anteriormente */}
             <BookingModal
                 open={modalOpen}
                 onClose={() => setModalOpen(false)}

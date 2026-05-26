@@ -37,11 +37,17 @@ public class BookingEntity {
     @JoinColumn(name = "packageID", nullable = false)
     private PackTourEntity packTour;
 
-    // En tu BookingEntity actual
     @JsonIgnore
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
     private List<CompanionEntity> companions;
-    private String specialRequests; // Para las "solicitudes especiales"
+    private String specialRequests;
 
-    //public BookingEntity(){}
+    @Transient
+    public int getPassengersCount() {
+        int count = 1;
+        if (this.companions != null && !this.companions.isEmpty()) {
+            count += this.companions.size();
+        }
+        return count;
+    }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import httpClient from '../http-common'; // Asegúrate que esta ruta llegue a tu archivo
 import { useKeycloak } from '@react-keycloak/web';
 import {
     Table, TableBody, TableCell, TableHead,
@@ -14,7 +14,7 @@ const UserList = () => {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await axios.get('/api/v1/user/users', {
+                const response = await httpClient.get('/user/users', {
                     headers: {
                         Authorization: `Bearer ${keycloak.token}`
                     }
@@ -26,6 +26,7 @@ const UserList = () => {
                 setLoading(false);
             }
         };
+
         if (keycloak.token) {
             fetchUsers();
         }

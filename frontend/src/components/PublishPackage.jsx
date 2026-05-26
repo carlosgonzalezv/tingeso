@@ -3,7 +3,7 @@ import { Container, Typography, TextField, Button, Grid, Paper, InputAdornment, 
 import { useNavigate } from 'react-router-dom';
 import { useKeycloak } from '@react-keycloak/web';
 import CalendarMonth from '@mui/icons-material/CalendarMonth';
-import axios from 'axios';
+import httpClient from '../http-common';
 
 function PublishPackage() {
     const navigate = useNavigate();
@@ -21,19 +21,15 @@ function PublishPackage() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-
-        // Si es precio o cupos, no permitimos que digiten valores menores a 0
         if ((name === 'price' || name === 'totalSlots') && value !== '' && Number(value) < 0) {
-            return; // Ignora el cambio si es negativo
+            return;
         }
-
         setFormData({ ...formData, [name]: value });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
-
         const payload = {
             name: formData.name,
             destination: formData.destination,
@@ -47,19 +43,17 @@ function PublishPackage() {
         };
 
         try {
-            // Agregamos el header con el Bearer Token obtenido de Keycloak
-            const response = await axios.post('http://localhost:8080/api/v1/tourPack/', payload, {
+            const response = await httpClient.post('/tourPack/', payload, {
                 headers: {
                     Authorization: `Bearer ${keycloak?.token}`
                 }
             });
-
             if (response.status === 200) {
                 alert("Paquete publicado con éxito");
                 navigate("/");
             }
         } catch (err) {
-            const errorMessage = err.response?.headers['error-message'] || "Error al publicar el paquete";
+            const errorMessage = err.response?.data?.message || "Error al publicar el paquete";
             setError(errorMessage);
             console.error("Error en el servidor:", err);
         }
@@ -76,12 +70,9 @@ function PublishPackage() {
 
                 <form onSubmit={handleSubmit}>
                     <Grid container spacing={3}>
-                        {/* Fila 1: Nombre */}
                         <Grid item xs={12}>
                             <TextField fullWidth label="Nombre del Paquete" name="name" value={formData.name} onChange={handleChange} required />
                         </Grid>
-
-                        {/* Fila 2: Destino y Precio */}
                         <Grid item xs={12} sm={6}>
                             <TextField fullWidth label="Destino" name="destination" value={formData.destination} onChange={handleChange} required />
                         </Grid>
@@ -94,12 +85,10 @@ function PublishPackage() {
                                 value={formData.price}
                                 onChange={handleChange}
                                 required
-                                inputProps={{ min: "0" }} // <-- Bloquea precios negativos
+                                inputProps={{ min: "0" }}
                                 InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
                             />
                         </Grid>
-
-                        {/* Fila 3: Descripción SOLA (xs=12 para que use todo el ancho) */}
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
@@ -112,8 +101,6 @@ function PublishPackage() {
                                 rows={4}
                             />
                         </Grid>
-
-                        {/* Fila 4: Fechas JUNTAS (sm=6 cada una para que compartan la fila) */}
                         <Grid item xs={12} sm={6}>
                             <TextField
                                 fullWidth
@@ -127,7 +114,6 @@ function PublishPackage() {
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
-                                            {/* 2. Usamos el nombre correcto del componente y damos margen */}
                                             <CalendarMonth sx={{ color: '#FB8C00', mr: 1 }} />
                                         </InputAdornment>
                                     ),
@@ -144,7 +130,6 @@ function PublishPackage() {
                                 onChange={handleChange}
                                 required
                                 InputLabelProps={{ shrink: true }}
-                                // AÑADIMOS EL ICONO AQUÍ
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
@@ -154,8 +139,6 @@ function PublishPackage() {
                                 }}
                             />
                         </Grid>
-
-                        {/* Fila 5: Cupos Totales */}
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
@@ -165,11 +148,9 @@ function PublishPackage() {
                                 value={formData.totalSlots}
                                 onChange={handleChange}
                                 required
-                                inputProps={{ min: "1" }} // <-- Bloquea cupos negativos o en cero
+                                inputProps={{ min: "1" }}
                             />
                         </Grid>
-
-                        {/* Fila 6: Botones */}
                         <Grid item xs={12} sx={{ display: 'flex', gap: 2, mt: 2 }}>
                             <Button type="submit" variant="contained" size="large" sx={{ backgroundColor: '#FB8C00', '&:hover': { backgroundColor: '#e67e00' }, flexGrow: 1, fontWeight: 'bold' }}>
                                 Publicar Paquete

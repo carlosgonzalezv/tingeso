@@ -24,17 +24,11 @@ public class UserController {
 
     //Each time a user logs in through Keycloak, their information is correctly
     //reflected in your local PostgreSQL database.
-    // Cada vez que un usuario inicia sesión en Keycloak, su información se sincroniza.
     @PostMapping("/sync")
     public ResponseEntity<UserEntity> syncUser(@RequestBody UserEntity user) {
         return userRepository.findByEmail(user.getEmail())
                 .map(existingUser -> {
-                    // Si el correo ya existe, actualizamos su ID de Keycloak
-                    // (por si borraste/recreaste el usuario en el panel de Keycloak)
                     existingUser.setKeycloackID(user.getKeycloackID());
-                    // Puedes agregar aquí otros campos que quieras forzar a sincronizar
-                    // desde Keycloak al iniciar sesión.
-
                     return ResponseEntity.ok(userRepository.save(existingUser));
                 })
                 .orElseGet(() -> ResponseEntity.ok(userService.saveUser(user)));
@@ -72,14 +66,12 @@ public class UserController {
         UserEntity userInDb = userRepository.findByKeycloackID(keycloakId).orElse(null);
         if (userInDb == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado en la DB");
-
         }
         String subFromToken = authentication.getName();
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equalsIgnoreCase("ADMIN")
                         || a.getAuthority().equalsIgnoreCase("ROLE_ADMIN"));
         boolean isOwner = subFromToken.trim().equals(keycloakId.trim());
-
         if (!isOwner && !isAdmin) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body("No tienes permisos para editar este perfil.");

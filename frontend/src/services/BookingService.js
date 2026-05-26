@@ -1,15 +1,10 @@
-import axios from 'axios';
+import httpClient from '../http-common';
+const API_URL = "/booking";
 
-const API_URL = "http://localhost:8080/api/v1/booking";
-
-// NUEVO MÉTODO: Obtener una reserva por su ID específico
 const getBookingById = async (token, bookingId) => {
     try {
-        // Le agregamos /summary/ y volvemos a inyectar las cabeceras de autenticación
-        return await axios.get(`${API_URL}/summary/${bookingId}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
+        return await httpClient.get(`${API_URL}/summary/${bookingId}`, {
+            headers: { Authorization: `Bearer ${token}` }
         });
     } catch (error) {
         console.error("Error en BookingService (getBookingById):", error);
@@ -19,10 +14,8 @@ const getBookingById = async (token, bookingId) => {
 
 const createBooking = async (token, bookingData) => {
     try {
-        return await axios.post(`${API_URL}/create`, bookingData, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
+        return await httpClient.post(`${API_URL}/create`, bookingData, {
+            headers: { Authorization: `Bearer ${token}` }
         });
     } catch (error) {
         console.error("Error en BookingService (createBooking):", error);
@@ -32,10 +25,8 @@ const createBooking = async (token, bookingData) => {
 
 const getBookingsByEmail = async (token, email) => {
     try {
-        const response = await axios.get(`${API_URL}/my-bookings/${email}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
+        const response = await httpClient.get(`${API_URL}/my-bookings/${email}`, {
+            headers: { Authorization: `Bearer ${token}` }
         });
         return response.data;
     } catch (error) {
@@ -46,10 +37,8 @@ const getBookingsByEmail = async (token, email) => {
 
 const getAllBookings = async (token) => {
     try {
-        const response = await axios.get(`${API_URL}/`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
+        const response = await httpClient.get(`${API_URL}/`, {
+            headers: { Authorization: `Bearer ${token}` }
         });
         return response.data;
     } catch (error) {
@@ -60,7 +49,7 @@ const getAllBookings = async (token) => {
 
 const updateBookingStatus = async (token, bookingId, newStatus) => {
     try {
-        const response = await axios.put(`${API_URL}/${bookingId}/status`, {}, {
+        const response = await httpClient.put(`${API_URL}/${bookingId}/status`, {}, {
             params: { newStatus: newStatus },
             headers: { Authorization: `Bearer ${token}` }
         });
@@ -73,7 +62,7 @@ const updateBookingStatus = async (token, bookingId, newStatus) => {
 
 const getDashboardStats = async (token) => {
     try {
-        const response = await axios.get(`${API_URL}/dashboard/stats`, {
+        const response = await httpClient.get(`${API_URL}/dashboard/stats`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         return response.data;
@@ -85,7 +74,7 @@ const getDashboardStats = async (token) => {
 
 const getSalesReport = async (token, start, end) => {
     try {
-        const response = await axios.get(`${API_URL}/reports/sales`, {
+        const response = await httpClient.get(`${API_URL}/reports/sales`, {
             params: { start, end },
             headers: { Authorization: `Bearer ${token}` }
         });
@@ -98,7 +87,7 @@ const getSalesReport = async (token, start, end) => {
 
 const getRankingReport = async (token, start, end) => {
     try {
-        const response = await axios.get(`${API_URL}/reports/ranking`, {
+        const response = await httpClient.get(`${API_URL}/reports/ranking`, {
             params: { start, end },
             headers: { Authorization: `Bearer ${token}` }
         });
@@ -109,9 +98,8 @@ const getRankingReport = async (token, start, end) => {
     }
 };
 
-// Recuerda agregarlo aquí abajo también para exponerlo
 export default {
-    getBookingById, // <-- Agregado
+    getBookingById,
     createBooking,
     getBookingsByEmail,
     getAllBookings,

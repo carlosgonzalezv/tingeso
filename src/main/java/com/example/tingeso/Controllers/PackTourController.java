@@ -18,7 +18,7 @@ public class PackTourController {
     @Autowired
     private PackTourService packTourService;
 
-    // Obtener todos los paquetes
+    //Get all packages
     @GetMapping("/")
     public ResponseEntity<List<PackTourEntity>> listTourPack() {
         List<PackTourEntity> tourPacks = packTourService.getTourPack();
@@ -28,7 +28,7 @@ public class PackTourController {
         return ResponseEntity.ok(tourPacks);
     }
 
-    // Guardar o actualizar un paquete
+    // Save or update a package
     @PostMapping("/")
     public ResponseEntity<PackTourEntity> saveTourPack(@RequestBody PackTourEntity packTour) {
         try {
@@ -39,7 +39,7 @@ public class PackTourController {
         }
     }
 
-    // "Borrado" lógico: cambia el estado a INACTIVO
+    // Logical "Delete": changes the state to "INACTIVO"
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTourPack(@PathVariable Long id) {
         try {
@@ -49,5 +49,4 @@ public class PackTourController {
             return ResponseEntity.notFound().build();
         }
     }
-
 }
