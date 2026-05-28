@@ -21,14 +21,16 @@ services:
       KC_DB_URL: jdbc:postgresql://postgres:5432/tingeso
       KC_DB_USERNAME: postgres
       KC_DB_PASSWORD: link5321
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
       KC_HOSTNAME_URL: "http://159.203.186.121:9090"
-      KC_HTTP_ENABLED: true
-      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_ADMIN_URL: "http://159.203.186.121:9090"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
     command: start-dev
     ports:
-      - "9090:8080"
+      - "9090:9090"
     depends_on:
       - postgres
     networks:
