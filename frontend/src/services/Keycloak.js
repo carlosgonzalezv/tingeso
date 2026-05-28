@@ -1,7 +1,7 @@
 import Keycloak from 'keycloak-js';
 
 const keycloakConfig = {
-    url: 'http://localhost:9090',
+    url: 'http://159.203.186.121:9090',
     realm: 'TravelAgency',
     clientId: 'sisgr-frontend'
 };

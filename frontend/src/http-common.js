@@ -2,7 +2,7 @@ import axios from "axios";
 import keycloak from './services/Keycloak.js';
 
 const httpClient = axios.create({
-    baseURL: "http://localhost:8090/api/v1",
+    baseURL: "http://159.203.186.121:8090/api/v1",
     headers: {
         "Content-type": "application/json",
     },
