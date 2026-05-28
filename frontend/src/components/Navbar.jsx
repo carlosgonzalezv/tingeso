@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 function Navbar() {
     const { keycloak, initialized } = useKeycloak();
     const [anchorElUser, setAnchorElUser] = React.useState(null);
-    const roles = keycloak.tokenParsed?.resource_access?.["sisgr-frontend"]?.roles || [];
+    const roles = keycloak.tokenParsed?.realm_access?.roles || [];
     const isAdmin = roles.includes("ADMIN");
     const navigate = useNavigate();
     const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);

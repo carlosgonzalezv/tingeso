@@ -9,5 +9,4 @@ class TingesoApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
 }

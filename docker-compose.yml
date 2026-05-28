@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # Database
+  postgres:
+    image: postgres:15
+    container_name: tingeso-postgres
+    environment:
+      POSTGRES_DB: tingeso
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: link5321
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - backend-network
+
+  # Keycloak
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: tingeso-keycloak
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/tingeso
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: link5321
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME_URL: http://localhost:9090
+      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT: false
+    command: start-dev
+    ports:
+      - "9090:8080"
+    depends_on:
+      - postgres
+    networks:
+      - backend-network
+
+  # Backend (1 instancia)
+    # Backend (1 instancia)
+  backend:
+      image: carlosgv5/payroll-backend:latest
+      container_name: tingeso-backend
+      ports:
+        - "8090:8090"
+      environment:
+        - DB_HOST=postgres
+        - DB_PORT=5432
+        - DB_NAME=tingeso
+        - DB_USER=postgres
+        - DB_PASSWORD=link5321
+        - KCK_URL=http://keycloak:8080/realms/TravelAgency
+        - KCK_JWK_URL=http://keycloak:8080/realms/TravelAgency/protocol/openid-connect/certs
+        - KCK_REALM=TravelAgency
+        - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY=DEBUG
+      depends_on:
+        - postgres
+        - keycloak
+      networks:
+        - backend-network
+
+  # Frontend (1 instancia)
+  frontend:
+    image: carlosgv5/payroll-frontend:latest
+    container_name: tingeso-frontend
+    ports:
+      - "8070:80"
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

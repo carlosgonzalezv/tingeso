@@ -7,16 +7,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-//import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class PackTourService {
+
+    private final PackTourRepository packTourRepository;
+    private final BookingRepository bookingRepository;
+
     @Autowired
-    PackTourRepository packTourRepository;
-    @Autowired
-    private BookingRepository bookingRepository;
+    public PackTourService(PackTourRepository packTourRepository, BookingRepository bookingRepository) {
+        this.packTourRepository = packTourRepository;
+        this.bookingRepository = bookingRepository;
+    }
 
     //Returns a list of all packages, but with a filter: it excludes all those marked as "INACTIVO"
     public List<PackTourEntity> getTourPack() {
@@ -26,52 +30,57 @@ public class PackTourService {
     }
 
     //Check if the pack meets multiple conditions
-    private void preparePack (PackTourEntity packTour){
-        if (packTour.getStartDate() == null || packTour.getFinishDate()==null){
+    private void preparePack(PackTourEntity packTour) {
+        if (packTour.getStartDate() == null || packTour.getFinishDate() == null) {
             throw new IllegalArgumentException("la fecha de inicio y termino son obligatorias");
         }
-        if (!packTour.getFinishDate().isAfter(packTour.getStartDate())){
+        if (!packTour.getFinishDate().isAfter(packTour.getStartDate())) {
             throw new IllegalArgumentException("la fecha de termino debe ser despues de la de inicio");
+        }
+        if (packTour.getTotalSlots() == null || packTour.getTotalSlots() <= 0) {
+            throw new IllegalArgumentException("debe al menos haber un cupo en el paquete");
+        }
+
+        if ("CANCELADO".equals(packTour.getStatus())) {
+            packTour.setAvailableSlots(0);
+            return;
         }
         if (packTour.getFinishDate().isBefore(LocalDateTime.now())) {
             packTour.setStatus("NO VIGENTE");
             return;
         }
-        if ("CANCELADO".equals(packTour.getStatus())) {
-            packTour.setAvailableSlots(0);
-            return;
-        }
-        if (packTour.getTotalSlots() ==null ||packTour.getTotalSlots() <=0){
-            throw new IllegalArgumentException("debe al menos haber un cupo en el paquete");
-        }
-        if (packTour.getAvailableSlots()==null){
+
+        if (packTour.getAvailableSlots() == null) {
             packTour.setAvailableSlots(packTour.getTotalSlots());
         }
-        if (packTour.getAvailableSlots()==0){
-            packTour.setAvailableSlots(0);
+
+        if (packTour.getAvailableSlots() == 0) {
             packTour.setStatus("AGOTADO");
-        }else {
+        } else {
             packTour.setStatus("DISPONIBLE");
         }
     }
 
     //Save the package to the database, but not before validating twice:
     //First, that the changes are legal (validateCriticalChanges) and then that the state is correct (preparePack).
-    public PackTourEntity saveTourPack (PackTourEntity packTour) {
+    public PackTourEntity saveTourPack(PackTourEntity packTour) {
         validateCriticalChanges(packTour);
         preparePack(packTour);
         return packTourRepository.save(packTour);
     }
 
     //The number of available slots decreases when someone makes a purchase.
-    public void reduceSlot(Long Id, int quantity){
-        PackTourEntity packTour=packTourRepository.findById(Id).orElseThrow();
-        int newSlot=packTour.getAvailableSlots()-quantity;
-        if (newSlot<0){
+    public void reduceSlot(Long id, int quantity) {
+        PackTourEntity packTour = packTourRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Paquete no encontrado"));
+
+        int newSlot = packTour.getAvailableSlots() - quantity;
+        if (newSlot < 0) {
             throw new IllegalArgumentException("no hay suficientes cupos disponibles");
         }
+
         packTour.setAvailableSlots(newSlot);
-        if (newSlot==0){
+        if (newSlot == 0) {
             packTour.setStatus("AGOTADO");
         }
         packTourRepository.save(packTour);
@@ -81,6 +90,7 @@ public class PackTourService {
     public void addSlot(Long id, int quantity) {
         PackTourEntity pack = packTourRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Paquete no encontrado"));
+
         pack.setAvailableSlots(pack.getAvailableSlots() + quantity);
         if (pack.getAvailableSlots() > 0 && "AGOTADO".equals(pack.getStatus())) {
             pack.setStatus("DISPONIBLE");
@@ -93,6 +103,7 @@ public class PackTourService {
     public void deletePackTour(Long id) {
         PackTourEntity pack = packTourRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Paquete no encontrado"));
+
         pack.setStatus("INACTIVO");
         pack.setAvailableSlots(0);
         packTourRepository.save(pack);
@@ -101,9 +112,12 @@ public class PackTourService {
     //This means that when there are reservations in a package, the details cannot be changed.
     private void validateCriticalChanges(PackTourEntity newDetails) {
         if (newDetails.getId() == null) return;
+
         PackTourEntity currentPack = packTourRepository.findById(newDetails.getId())
                 .orElseThrow(() -> new RuntimeException("Paquete no encontrado"));
+
         long totalPassengersCount = bookingRepository.countTotalPassengersByPackTourId(newDetails.getId());
+
         if (totalPassengersCount > 0) {
             if (newDetails.getTotalSlots() < totalPassengersCount) {
                 throw new IllegalArgumentException("No puedes reducir los cupos totales a " + newDetails.getTotalSlots() +

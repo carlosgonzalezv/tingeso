@@ -29,4 +29,10 @@ public class UserEntity {
     private String idDocument;
     private String statement;
 
+    @PrePersist
+    protected void onCreate() {
+        if (this.idDocument == null || this.idDocument.isEmpty()) {
+            this.idDocument = "PENDIENTE";
+        }
+    }
 }

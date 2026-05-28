@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.http.HttpStatus;
 
+import java.util.Objects;
+
 @RestController
 @RequestMapping("/api/v1/user")
 @CrossOrigin("*")
@@ -25,13 +27,15 @@ public class UserController {
     //Each time a user logs in through Keycloak, their information is correctly
     //reflected in your local PostgreSQL database.
     @PostMapping("/sync")
-    public ResponseEntity<UserEntity> syncUser(@RequestBody UserEntity user) {
+    public ResponseEntity<?> syncUser(@RequestBody UserEntity user) {
         return userRepository.findByEmail(user.getEmail())
                 .map(existingUser -> {
                     existingUser.setKeycloackID(user.getKeycloackID());
                     return ResponseEntity.ok(userRepository.save(existingUser));
                 })
-                .orElseGet(() -> ResponseEntity.ok(userService.saveUser(user)));
+                .orElseGet(() -> {
+                    return ResponseEntity.ok(userService.saveUser(user));
+                });
     }
 
     //Display the list of all users registered in the database.
@@ -69,7 +73,7 @@ public class UserController {
         }
         String subFromToken = authentication.getName();
         boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equalsIgnoreCase("ADMIN")
+                .anyMatch(a -> Objects.requireNonNull(a.getAuthority()).equalsIgnoreCase("ADMIN")
                         || a.getAuthority().equalsIgnoreCase("ROLE_ADMIN"));
         boolean isOwner = subFromToken.trim().equals(keycloakId.trim());
         if (!isOwner && !isAdmin) {
