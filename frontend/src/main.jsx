@@ -5,6 +5,7 @@ import keycloak from './services/Keycloak.js';
 import './index.css'
 import App from './App.jsx'
 
+// En tu main.jsx
 createRoot(document.getElementById('root')).render(
     <StrictMode>
         <ReactKeycloakProvider
@@ -12,6 +13,11 @@ createRoot(document.getElementById('root')).render(
             initOptions={{
                 onLoad: 'login-required',
                 checkLoginIframe: false
+            }}
+            onEvent={(event, error) => {
+                if (event === 'onInitError') {
+                    console.error("ERROR DE KEYCLOAK:", error);
+                }
             }}
         >
             <App />
