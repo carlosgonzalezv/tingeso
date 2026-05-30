@@ -5,7 +5,6 @@ import keycloak from './services/Keycloak.js';
 import './index.css'
 import App from './App.jsx'
 
-// En tu main.jsx
 createRoot(document.getElementById('root')).render(
     <StrictMode>
         <ReactKeycloakProvider

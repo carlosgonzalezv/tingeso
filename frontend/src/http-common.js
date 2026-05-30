@@ -2,7 +2,7 @@ import axios from "axios";
 import keycloak from './services/Keycloak.js';
 
 const httpClient = axios.create({
-    baseURL: "/api/v1",
+    baseURL: "https://turismo-api.duckdns.org/api/v1",
     headers: {
         "Content-type": "application/json",
     },
