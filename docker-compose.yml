@@ -23,11 +23,10 @@ services:
       KC_DB_PASSWORD: link5321
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-      # Configuración moderna V2 para evitar errores de HTTPS
-      KC_HOSTNAME: 159.203.186.121
-      KC_HOSTNAME_PORT: 9090
-      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY_HEADERS: "xforwarded"
       KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
     command: start-dev
     ports:
       - "9090:8080"
