@@ -10,7 +10,7 @@ createRoot(document.getElementById('root')).render(
         <ReactKeycloakProvider
             authClient={keycloak}
             initOptions={{
-                onLoad: 'login-required',
+                onLoad: 'check-sso',
                 checkLoginIframe: false
             }}
             onEvent={(event, error) => {
