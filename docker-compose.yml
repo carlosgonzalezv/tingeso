@@ -26,8 +26,9 @@ services:
       KC_PROXY: "edge"
       KC_PROXY_HEADERS: "xforwarded"
       KC_HTTP_ENABLED: "true"
-      KC_HOSTNAME: "https://turismo-auth.duckdns.org"
-      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME: "turismo-auth.duckdns.org"
+      KC_HOSTNAME_STRICT: "true"
+      KC_HOSTNAME_STRICT_HTTPS: "true"
     command: start-dev
     ports:
       - "9090:8080"
