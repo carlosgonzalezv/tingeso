@@ -1,7 +1,7 @@
 import Keycloak from 'keycloak-js';
 
 const keycloakConfig = {
-    url: 'https://tu-auth.duckdns.org',
+    url: 'https://turismo-auth.duckdns.org',
     realm: 'TravelAgency',
     clientId: 'sisgr-frontend'
 };
