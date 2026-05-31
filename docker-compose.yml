@@ -23,9 +23,10 @@ services:
       KC_DB_PASSWORD: link5321
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_PROXY: "edge"
       KC_PROXY_HEADERS: "xforwarded"
       KC_HTTP_ENABLED: "true"
-      KC_HOSTNAME: "turismo-auth.duckdns.org"
+      KC_HOSTNAME: "https://turismo-auth.duckdns.org"
       KC_HOSTNAME_STRICT: "false"
     command: start-dev
     ports:
