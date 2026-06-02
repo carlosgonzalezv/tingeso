@@ -62,6 +62,10 @@ export default function DashboardReports() {
                             InputLabelProps={{ shrink: true }}
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
+                            sx={{
+                                '& .MuiInputBase-root': { height: '56px' },
+                                '& input::-webkit-calendar-picker-indicator': { display: 'block', cursor: 'pointer', padding: '0px', margin: '0px', fontSize: '20px' }
+                            }}
                         />
                     </Grid>
                     <Grid item xs={12} sm={4}>
@@ -72,6 +76,10 @@ export default function DashboardReports() {
                             InputLabelProps={{ shrink: true }}
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
+                            sx={{
+                                '& .MuiInputBase-root': { height: '56px' },
+                                '& input::-webkit-calendar-picker-indicator': { display: 'block', cursor: 'pointer', padding: '0px', margin: '0px', fontSize: '20px' }
+                            }}
                         />
                     </Grid>
                     <Grid item xs={12} sm={4}>

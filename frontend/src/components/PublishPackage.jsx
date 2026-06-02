@@ -63,7 +63,7 @@ function PublishPackage() {
         <Container maxWidth={false} sx={{ width: '95%', mt: 5, mb: 5 }}>
             <Paper elevation={3} sx={{ p: 4, borderRadius: '15px', width: '100%' }}>
                 <Typography variant="h4" gutterBottom sx={{ color: '#FB8C00', fontWeight: 'bold', textAlign: 'center', mb: 4 }}>
-                    Publicar Nuevo Paquete Turístico
+                    Publicar nuevo paquete turístico
                 </Typography>
 
                 {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
@@ -118,6 +118,10 @@ function PublishPackage() {
                                         </InputAdornment>
                                     ),
                                 }}
+                                sx={{
+                                    '& .MuiInputBase-root': { height: '56px' },
+                                    '& input::-webkit-calendar-picker-indicator': { display: 'block', cursor: 'pointer', padding: '0px', margin: '0px', fontSize: '20px' }
+                                }}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
@@ -136,6 +140,10 @@ function PublishPackage() {
                                             <CalendarMonth sx={{ color: '#FB8C00', mr: 1 }} />
                                         </InputAdornment>
                                     ),
+                                }}
+                                sx={{
+                                    '& .MuiInputBase-root': { height: '56px' },
+                                    '& input::-webkit-calendar-picker-indicator': { display: 'block', cursor: 'pointer', padding: '0px', margin: '0px', fontSize: '20px' }
                                 }}
                             />
                         </Grid>

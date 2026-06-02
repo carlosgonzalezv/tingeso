@@ -55,7 +55,11 @@ const SearchBar = ({
             <TextField
                 label="Desde"
                 type="date"
-                sx={{ width: '160px' }}
+                sx={{
+                    width: '160px',
+                    '& .MuiInputBase-root': { height: '56px' },
+                    '& input::-webkit-calendar-picker-indicator': { display: 'block', cursor: 'pointer', padding: '0px', margin: '0px', fontSize: '20px' }
+                }}
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 InputLabelProps={{ shrink: true }}
@@ -63,7 +67,11 @@ const SearchBar = ({
             <TextField
                 label="Hasta"
                 type="date"
-                sx={{ width: '160px' }}
+                sx={{
+                    width: '160px',
+                    '& .MuiInputBase-root': { height: '56px' },
+                    '& input::-webkit-calendar-picker-indicator': { display: 'block', cursor: 'pointer', padding: '0px', margin: '0px', fontSize: '20px' }
+                }}
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 InputLabelProps={{ shrink: true }}
