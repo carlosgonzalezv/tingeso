@@ -20,7 +20,7 @@ export default function ManageBookings() {
                         packageName: booking?.packTour?.name || booking?.packageName || "Sin nombre",
                         userName: booking?.users?.name || booking?.userEmail || "Usuario Desconocido",
                         totalAmount: Number(booking?.totalAmount || booking?.totalamount || 0),
-                        passengerCount: Number(booking?.passengerCount || 1),
+                        passengerCount: Number(booking?.passengersCount || booking?.passengerCount || 1),
                         status: booking?.status ? String(booking.status).toUpperCase() : "PENDIENTE"
                     }));
                     setBookings(safeData);
@@ -101,7 +101,7 @@ export default function ManageBookings() {
                                 <TableCell>{item.userName}</TableCell>
                                 <TableCell>{item.packageName}</TableCell>
                                 <TableCell>{item.passengerCount}</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold', color: '#2e7d32' }}>${item.totalAmount}</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', color: '#2e7d32' }}>${item.totalAmount?.toLocaleString('es-CL')}</TableCell>
                                 <TableCell>
                                     <Select
                                         value={item.status}

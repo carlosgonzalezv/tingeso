@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import httpClient from '../http-common'; // Asegúrate que esta ruta llegue a tu archivo
+import httpClient from '../http-common';
 import { useKeycloak } from '@react-keycloak/web';
 import {
     Table, TableBody, TableCell, TableHead,

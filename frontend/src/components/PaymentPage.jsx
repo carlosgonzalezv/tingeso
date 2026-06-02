@@ -40,22 +40,50 @@ const PaymentPage = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+
         if (name === 'cardNumber') {
             const onlyNumbers = value.replace(/\D/g, '');
             if (onlyNumbers.length <= 16) {
                 setFormData({ ...formData, [name]: onlyNumbers });
             }
-        } else {
+        }
+        else if (name === 'expirationDate') {
+            const onlyNumbers = value.replace(/\D/g, '');
+            if (onlyNumbers.length <= 4) {
+                let formatted = onlyNumbers;
+                if (onlyNumbers.length > 2) {
+                    formatted = `${onlyNumbers.slice(0, 2)}/${onlyNumbers.slice(2)}`;
+                }
+                setFormData({ ...formData, [name]: formatted });
+            }
+        }
+        else if (name === 'cvv') {
+            const onlyNumbers = value.replace(/\D/g, '');
+            if (onlyNumbers.length <= 3) {
+                setFormData({ ...formData, [name]: onlyNumbers });
+            }
+        }
+        else {
             setFormData({ ...formData, [name]: value });
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         if (formData.cardNumber.length !== 16) {
             setError("El número de tarjeta debe tener exactamente 16 dígitos.");
             return;
         }
+        if (formData.expirationDate.length !== 5) {
+            setError("La fecha de expiración debe tener el formato MM/YY completo.");
+            return;
+        }
+        if (formData.cvv.length !== 3) {
+            setError("El CVV debe tener exactamente 3 dígitos.");
+            return;
+        }
+
         setProcessing(true);
         setError(null);
 
@@ -154,6 +182,8 @@ const PaymentPage = () => {
                                 placeholder="MM/YY"
                                 value={formData.expirationDate}
                                 onChange={handleInputChange}
+                                inputProps={{ maxLength: 5, pattern: "(0[1-9]|1[0-2])/\\d{2}" }}
+                                helperText="Formato MM/YY"
                             />
                             <TextField
                                 label="CVV"
@@ -163,7 +193,8 @@ const PaymentPage = () => {
                                 placeholder="123"
                                 value={formData.cvv}
                                 onChange={handleInputChange}
-                                inputProps={{ maxLength: 3 }}
+                                inputProps={{ maxLength: 3, pattern: "\\d{3}" }}
+                                helperText="3 dígitos"
                             />
                         </Box>
                         <Button type="submit" variant="contained" color="primary" size="large" disabled={processing} sx={{ mt: 2 }}>

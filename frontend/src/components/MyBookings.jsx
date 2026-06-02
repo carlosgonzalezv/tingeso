@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useKeycloak } from '@react-keycloak/web';
 import { Container, Paper, Typography, Box, Chip, Button, Stack, Divider, CircularProgress, Alert } from '@mui/material';
@@ -12,40 +12,61 @@ export default function MyBookings() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const loadBookings = useCallback(() => {
+        if (!initialized || !keycloak.authenticated) return;
+
+        BookingService.getBookingsByEmail(keycloak.token, keycloak.tokenParsed?.email || "")
+            .then((data) => {
+                const rawList = Array.isArray(data) ? data : [];
+                const safeData = rawList.map((booking) => {
+                    return {
+                        id: booking?.id ? String(booking.id) : '',
+                        packageName: booking?.packTour?.name || booking?.touristPackage?.name || "Destino Turístico",
+                        totalAmount: Number(booking?.totalAmount || 0),
+                        passengerCount: Number(booking?.passengersCount || booking?.passengerCount || 1),
+                        dateText: booking?.date || "Reciente",
+                        companions: Array.isArray(booking?.companionNames) ? booking.companionNames : [],
+                        requests: booking?.specialRequests || "",
+                        status: booking?.status ? String(booking.status).toUpperCase() : "PENDIENTE"
+                    };
+                });
+                setBookings(safeData);
+                setLoading(false);
+            })
+            .catch((err) => {
+                console.error("Error loading bookings:", err);
+                setError("No se pudieron cargar tus reservas. Inténtalo más tarde.");
+                setLoading(false);
+            });
+    }, [initialized, keycloak.authenticated, keycloak.token, keycloak.tokenParsed?.email]);
+
     useEffect(() => {
         if (!initialized) return;
 
         if (keycloak.authenticated) {
-            BookingService.getBookingsByEmail(keycloak.token, keycloak.tokenParsed?.email || "")
-                .then((data) => {
-                    const rawList = Array.isArray(data) ? data : [];
-                    const safeData = rawList.map((booking) => {
-                        return {
-                            id: booking?.id ? String(booking.id) : '',
-                            packageName: booking?.touristPackage?.name || "Destino Turístico",
-                            totalAmount: Number(booking?.totalAmount || 0),
-                            passengerCount: Number(booking?.passengerCount || 1),
-                            dateText: booking?.date || "Reciente",
-                            companions: Array.isArray(booking?.companionNames) ? booking.companionNames : [],
-                            requests: booking?.specialRequests || "",
-                            status: booking?.status ? String(booking.status).toUpperCase() : "PENDIENTE"
-                        };
-                    });
-                    setBookings(safeData);
-                    setLoading(false);
-                })
-                .catch((err) => {
-                    console.error("Error loading bookings:", err);
-                    setError("No se pudieron cargar tus reservas. Inténtalo más tarde.");
-                    setLoading(false);
-                });
+            loadBookings();
         } else {
             const timer = setTimeout(() => {
                 setLoading(false);
             }, 0);
             return () => clearTimeout(timer);
         }
-    }, [initialized, keycloak.authenticated, keycloak.token, keycloak.tokenParsed?.email]);
+    }, [initialized, keycloak.authenticated, loadBookings]);
+
+    const handleCancelBooking = (bookingId) => {
+        const confirmCancel = window.confirm("¿Estás seguro de que deseas cancelar esta reserva?");
+        if (confirmCancel) {
+            BookingService.updateBookingStatus(keycloak.token, bookingId, "CANCELADA")
+                .then(() => {
+                    alert("Reserva cancelada correctamente.");
+                    loadBookings();
+                })
+                .catch((err) => {
+                    console.error("Error cancelling booking:", err);
+                    alert("No se pudo cancelar la reserva. Inténtalo de nuevo.");
+                });
+        }
+    };
 
     const getStatusChip = (status) => {
         switch (status) {
@@ -107,7 +128,7 @@ export default function MyBookings() {
                                     <strong>Cantidad de Pasajeros:</strong> {item.passengerCount} {item.passengerCount === 1 ? 'persona' : 'personas'}
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: '#2e7d32', fontWeight: 'bold' }}>
-                                    <strong>Monto Total:</strong> ${item.totalAmount}
+                                    <strong>Monto Total:</strong> ${item.totalAmount?.toLocaleString('es-CL')}
                                 </Typography>
                                 {item.companions.length > 0 && (
                                     <Typography variant="body2" sx={{ gridColumn: { sm: '1 / span 2' } }}>
@@ -123,20 +144,33 @@ export default function MyBookings() {
                             <Divider sx={{ my: 1.5 }} />
                             {/* Terms & Actions */}
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 1, flexWrap: 'wrap', gap: 1 }}>
-                                <Typography variant="caption" color="text.secondary" sx={{ maxWidth: '70%' }}>
+                                <Typography variant="caption" color="text.secondary" sx={{ maxWidth: '60%' }}>
                                     * Condiciones: Para cambios o cancelaciones, póngase en contacto con la administración antes de la fecha programada.
                                 </Typography>
-                                {item.status === 'PENDIENTE' && (
-                                    <Button
-                                        variant="contained"
-                                        color="primary"
-                                        size="small"
-                                        onClick={() => navigate(`/pago/${item.id}`)}
-                                        sx={{ fontWeight: 'bold' }}
-                                    >
-                                        Pagar Ahora
-                                    </Button>
-                                )}
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                    {(item.status === 'PENDIENTE' || item.status === 'CONFIRMADA') && (
+                                        <Button
+                                            variant="outlined"
+                                            color="error"
+                                            size="small"
+                                            onClick={() => handleCancelBooking(item.id)}
+                                            sx={{ fontWeight: 'bold' }}
+                                        >
+                                            Cancelar Reserva
+                                        </Button>
+                                    )}
+                                    {item.status === 'PENDIENTE' && (
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            size="small"
+                                            onClick={() => navigate(`/pago/${item.id}`)}
+                                            sx={{ fontWeight: 'bold' }}
+                                        >
+                                            Pagar Ahora
+                                        </Button>
+                                    )}
+                                </Box>
                             </Box>
                         </Paper>
                     ))}
