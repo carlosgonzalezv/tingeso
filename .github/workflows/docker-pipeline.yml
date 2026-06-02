@@ -35,7 +35,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/turismo-backend:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/payroll-backend:latest
 
       - name: Build and Push Frontend
         uses: docker/build-push-action@v5
@@ -43,4 +43,4 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/turismo-frontend:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/payroll-frontend:latest
